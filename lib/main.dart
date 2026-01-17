@@ -549,3 +549,575 @@ class _AppNavigatorState extends State<AppNavigator> {
     }
     return phone;
   }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF9FAFB),
+      body: SafeArea(
+        child: Column(
+          children: [
+            //Header
+            Container(
+              height: 180,
+              decoration: const BoxDecoration(
+                color: Color(0xFFF97316),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
+                ),
+              ),
+              child: Stack (
+                children: [
+                  // Botão voltar
+                  Positioned(
+                    left: 16,
+                    top: 16,
+                    child: IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon (
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    ),
+                  ),
+                  Center(
+                    child: Column(
+                      mainAxisAligment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Icon(
+                            Icons.smartphone,
+                            size: 40,
+                            color: Color(0xFFF97316),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Verificação',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      Expanded(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 24),
+              const Text(
+                'Digite o código de 6 dígitos',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF111827),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Enviamos um SMS para\n${_formatPhone(widget.phoneNumber)}',
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF6B7280),
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 48),
+
+              // Campos de código
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: List.generate(6, (index) {
+                  return SizedBox(
+                    width: 50,
+                    height: 60,
+                    child: TextField(
+                      controller: _digitControllers[index],
+                      focusNode: _focusNodes[index],
+                      textAlign: TextAlign.center,
+                      maxLength: 1,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      decoration: InputDecoration(
+                        counterText: '',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: _code.length > index ? const Color(0xFFF97316) : Colors.grey.shade300,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+                const SizedBox(height: 40),
+
+                // Botão verificar
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: _code.length == 6
+                    ? () => widget.onCodeVerified(_code)
+                    : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFF97316),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text(
+                      'Verificar código',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 40),
+
+              // Mensagem de demonstração
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Colors.blue.shade100,
+                  ),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(
+                      Icons.lightbulb_outline,
+                      color: Colors.blue,
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Para fins de demonstração, use o código 123456 para autenticação.',
+                        style: TextStyle(
+                          color: Colors(0xFF1E40AF),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+      ),
+    );
+  }
+}
+  // =============== MAIN SCREEN ===============
+  class MainScreen extends StatefulWidget {
+    final String userPhone;
+    final VoidCallback onLogout
+
+    const MainScreen({
+      super.key,
+      required this.userPhone,
+      required this.onLogout,
+    });
+
+    @override
+    State<MainScreen> createState() => _MainScreenState();
+  }
+
+  class _MainScreenState extends State<MainScreen> {
+    with SingleTickerProviderStateMixin {
+      late TabController _tabController;
+      int _selectedIndex = 0;
+      bool _showDestinationForm = false;
+      String _selectedVehicle = '';
+      String _destinationAddress = '';
+
+      final List<Map<String, dynamic>> _recentAddress = [
+        {
+      'address': 'Rua Victor. P Correia, 184 - apto 1',
+      'name': 'Veronica',
+      'phone': '47996674426',
+      'type': 'home',
+    },
+    {
+      'address': 'Posto Portal Camboriú, Avenida Santa Catarina',
+      'name': 'Trabalho',
+      'phone': '',
+      'type': 'work',
+    },
+    {
+      'address': 'Rua Tereza Evangelista Gonçalves, 273',
+      'name': 'Favorito',
+      'phone': '',
+      'type': 'favorite',
+    },
+  ];
+    
+     @override
+     void initState() {
+      super.initState();
+      _tabController = TabController(length: 2, vsync: this);
+     }
+
+     @override
+     void dispose() {
+      _tabController.dispose();
+      super.dispose();
+     }
+
+     void _selectAddress(Map<String, dynamic> address) {
+      setState(() {
+        _destinationAddress = address['address'];
+        _showDestinationForm = false;
+      })
+     }
+
+     @override
+     Widget build(BuildContext context) {
+      if (_showDestinationForm) {
+        return _buildDestinationScreen();
+      }
+
+      return Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.menu, color: Color(0xFF111827)),
+            onPressed: () {},
+          ),
+          actions: [
+            IconButton(
+              Icon: const Icon(Icons.person_outline, color: Color(0zFF111827)),
+              onPressed: () {},
+            ),
+          ],
+        ),
+        body: Column(
+          children: [
+            //Header personalizado
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Olá, Gabriele!',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const Text(
+                    'VOCÊ PRECISA,',
+                    style: TextStyle(
+                      fontSize:20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF111827),
+                    ),
+                  ),
+                  const Text(
+                    'NG Entrega',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF111827),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+
+            // Tabs
+            Container(
+              color: Colors.white,
+              child: TabBar(
+                controller: _tabController,
+                indicatorColor: const Color(0xFFF97316),
+                labelColor: const Color(0xFFF97316),
+                unselectedLabelColor: Color(0xFF6B7280),
+                tabs: const [
+                  Tab(text: 'Enviar'),
+                  Tab(text: 'Receber'),
+                ],
+              ),
+            ),
+
+            // Conteúdo
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  // Tab Enviar
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      children: [
+                        // Remetente
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                blurRadius: 10,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAligment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Enviar de',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {},
+                                    child: const Text(
+                                      'Alterar',
+                                      style: TextStyle(
+                                        color: Color(0xFFF97316),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.location_on,
+                                    color: Color(0xFFF97316),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Rua Olga Bernardes Amorim, 101',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Gabriele - (47) 99641-2384',
+                                          style: TextStyle(
+                                            color: Colors.grey.shade600,
+                                          ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Destinatário
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _showDestinationForm = true;
+                          });
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                blurRadius: 10,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 24,
+                                height: 24,
+                                decoration: const BoxDecoration(
+                                  color: Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icon.circle,
+                                  color: Color(0xFFF97316),
+                                  size: 12,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Entregar para',
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    Text(
+                                      _destinationAddress.isNotEmpty
+                                      ? _destinationAddress
+                                      : 'Selecionar endereço de entrega',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: _destinationAddress.isNotEmpty
+                                        ? Color.black
+                                        : Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Icon(
+                                Icons.chevron_right,
+                                color: Colors.grey,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      if (_destinationAddress.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+
+                        // Detalhes da entrega
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                blurRadius: 10,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            children: [
+                              // Endereços
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(
+                                    Icons.location_on,
+                                    color: Color(0xFFF97316),
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Rua Olga Bernardes Amorim, 101',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Gabriele - (47) 99641-2384',
+                                          style: TextStyle(
+                                            color: Colors.grey.shade600,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Linha divisória
+                              Container(
+                                height: 20,
+                                width: 1,
+                                margin: const EdgeInsets.only(left: 9),
+                                color: Colors.grey.shade300,
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              // Destino
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(
+                                    Icons.location_on,
+                                    color: Color(0xFF10B981),
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Destinatário',
+                                          style: TextStyle(
+                                            color: Colors.grey.shade600,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              const SizedBox(height: 24),
+
+                              // Botão detalhes do item
+
+                            ],
+                          ),
+                        ),
+                      ]
