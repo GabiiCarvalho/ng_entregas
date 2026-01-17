@@ -228,3 +228,324 @@ class _AppNavigatorState extends State<AppNavigator> {
     }
     return value;
   }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF9FAFB),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Container(
+              height: 200,
+              decoration: const BoxDecoration(
+                  color: Color(0xFFF97316),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(30),
+                    bottomRight: Radius.circular(30),
+                    ),
+                  ),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Icon(
+                            Icons.local_shipping,
+                            size: 40,
+                            color: Color(0xFFF97316),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'NG Entregas',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                         ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Conteúdo
+
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        Children: [
+                          const SizedBox(height: 24),
+                          const Text(
+                            'Insira seu número de telefone',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF111827),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Enviaremos um código de 6 dígitos por SMS para autenticação',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Color(0xFF6B7280),
+                            ),
+                          ),
+                          const SizedBox(height: 40),
+
+                          // Campo de telefone
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Colors.grey.shade200,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Padding(
+                                  padding: EdgeInsets.only(left: 16),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.phone,
+                                        color: Color.grey,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        '+55',
+                                        style: TextStyle(
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _phoneController,
+                                    keyboardType: TextInputType.phone,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                      LengthLimitingTextInputFormatter(11),
+                                    ],
+                                    decoration: const InputDecoration(
+                                      border: InputBorder.none,
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 20,
+                                      ),
+                                      hintText: '(00) 00000-0000',
+                                      hintStyle: TextStyle(
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                    ),
+                                    onChanged: (value) {
+                                      final formatted = _formatPhone(value);
+                                      if (formatted != value) {
+                                        _phoneController.value = 
+                                            _phoneController.value.copyWith(
+                                            text: formatted,
+                                            selection: TextSelection.collapsed(
+                                              offset: formatted.length),
+                                        );
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+
+                          // Botão continuar
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                if (_phoneController.text.isNotEmpty) {
+                                  widget.onPhoneSubmitted(_phoneController.text);
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFF97316),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text(
+                              'Continuar',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // Divisor
+
+                        Row(
+                          children: [
+                            Expanded(
+                            child: Divider(
+                              color: Colors.grey.shade300,
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: Text(
+                                'ou',
+                                style: TextStyle(
+                                  color: Colors.grey.shade500,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Divider(
+                                color: Colors.grey.shade300,
+                              ),
+                            ),
+                          ],
+                        ),
+                        
+                        const SizedBox(height: 24),
+
+                        // Botão Google
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: OutlinedButton(
+                              onPressed: () {
+                              _phoneController.text = '(47) 99641-2384';
+                              widget.onPhoneSubmitted(_phoneController.text);
+                              },
+                              style: OutlinedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                side: BorderSide(color: Colors.grey.shade300,
+                                width: 2
+                              ),
+                          ),
+                              child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 24,
+                                  height: 24,
+                                  decoration: const BoxDecoration(
+                                    image: DecorationImage(
+                                      image: NetworkImage(
+                                      'https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png',
+                                      ),
+                                   ),
+                                 ),
+                               ),
+                                const SizedBox(width: 12),
+                                const Text(
+                                  'Continuar com o Google',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 40),
+
+                      // Termos e condições
+                      const Text(
+                        'Ao continuar, você concorda com nossos Termos de Uso e Política de Privacidade.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF6B7280),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+  }
+
+  // =============== SMS VERIFY SCREEN ===============
+  class SMSVerifyScreen extends StatefulWidget {
+    final String phoneNumber;
+    final Function(String) onCodeVerified;
+
+    const SMSVerifyScreen({
+      super.key,
+      required this.phone
+      required this.onCodeVerified,
+    });
+
+    @override
+    State<SMSVerifyScreenState> createState() => _SMSVerifyScreenState();
+  }
+
+  class _SMSVerifyScreenState extends State<SMSVerifyScreen> {
+    final List<TextEditingController> _digitControllers = List.generate(6, (_) => TextEditingController());
+    final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+    String _code = '';
+
+    @override
+    void initState() {
+      super.initState();
+      for (int i = 0; i < 6; i++) {
+        _digitControllers[i].addListener(() {
+          if (_digitControllers[i].text.isNotEmpty && i < 5) {
+            _focusNodes[i + 1].requestFocus();
+          }
+          _updateCode();
+        });
+      }
+    }
+
+    void _updateCode() {
+      String newCode = '';
+      for (var controller in _digitControllers) {
+        newCode += controller.text;
+      }
+      setState(() => _code = newCode);
+      if (newCode.length == 6) {
+        widget.onCodeVerified(newCode);
+      }
+    }
+
+    String _formatPhone(String value) {
+      String Cleaned = phone.replaceAll(RegExp('r[ˆ\d]'), '');
+      if (cleaned.length == 11) {
+        return '(${cleaned.substring(0, 2)}) ${cleaned.substring(2, 7)}-${cleaned.substring(7)}';
+    }
+    return phone;
+  }
