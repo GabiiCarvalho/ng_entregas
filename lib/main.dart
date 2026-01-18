@@ -43,6 +43,9 @@ class _DeliveryAppState extends State<DeliveryApp> {
   String _paymentMethod = '';
   String _selectedVehicle = 'moto';
   bool _pixCopied = false;
+  bool _showProfile = false;
+  bool _showItemDetails = false;
+  bool _deliveryAddressSet = false; // Nova variável para controlar se o endereço foi definido
 
   Map<String, String> _authData = {
     'name': '',
@@ -50,6 +53,11 @@ class _DeliveryAppState extends State<DeliveryApp> {
     'phone': '',
     'password': '',
   };
+
+  // Variáveis para detalhes do item
+  String _selectedItemType = 'Itens pessoais';
+  String _itemValue = '';
+  String _deliveryNotes = '';
 
   void _copyPixCode() async {
     const pixCode = '00020126580014br.gov.bcb.pix0136a1b2c3d4-e5f6-7890-abcd-ef1234567890520400005303986540525NG EXPRESS LTDA6009SAO PAULO62070503***63041D3D';
@@ -78,6 +86,14 @@ class _DeliveryAppState extends State<DeliveryApp> {
 
     if (_currentScreen == 'auth') {
       return _buildAuthScreen();
+    }
+
+    if (_showProfile) {
+      return _buildProfileScreen();
+    }
+
+    if (_showItemDetails) {
+      return _buildItemDetailsScreen();
     }
 
     if (_showDestinationForm) {
@@ -210,7 +226,7 @@ class _DeliveryAppState extends State<DeliveryApp> {
     );
   }
 
-  Widget _buildAuthScreen() {
+    Widget _buildAuthScreen() {
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -490,16 +506,33 @@ class _DeliveryAppState extends State<DeliveryApp> {
               padding: EdgeInsets.symmetric(vertical: 20, horizontal: 20),
               child: Row(
                 children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Colors.red[400]!, Colors.pink[400]!],
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _showProfile = true;
+                      });
+                    },
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Colors.red[400]!, Colors.pink[400]!],
+                        ),
+                        shape: BoxShape.circle,
                       ),
-                      shape: BoxShape.circle,
+                      child: Center(
+                        child: Text(
+                          'G',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                   SizedBox(width: 16),
@@ -508,7 +541,7 @@ class _DeliveryAppState extends State<DeliveryApp> {
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: Colors.black,
                     ),
                   ),
                 ],
@@ -541,11 +574,11 @@ class _DeliveryAppState extends State<DeliveryApp> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 padding: EdgeInsets.all(8),
-                                child: Icon(Icons.chevron_left, size: 24, color: Colors.black),
+                                child: Icon(Icons.chevron_right, size: 24, color: Colors.black),
                               ),
                               SizedBox(width: 8),
                               Text(
-                                'NG EXPRESS',
+                                'NG EXPRESS Entrega',
                                 style: TextStyle(
                                   fontSize: 28,
                                   fontWeight: FontWeight.bold,
@@ -700,133 +733,12 @@ class _DeliveryAppState extends State<DeliveryApp> {
                             padding: EdgeInsets.all(20),
                             child: Column(
                               children: [
-                                Container(
-                                  width: double.infinity,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(16),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black12,
-                                        blurRadius: 4,
-                                        offset: Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  padding: EdgeInsets.all(16),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Selecione o tipo de veículo',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey[600],
-                                        ),
-                                      ),
-                                      SizedBox(height: 12),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: GestureDetector(
-                                              onTap: () {
-                                                setState(() {
-                                                  _selectedVehicle = 'moto';
-                                                });
-                                              },
-                                              child: Container(
-                                                padding: EdgeInsets.all(16),
-                                                decoration: BoxDecoration(
-                                                  color: _selectedVehicle == 'moto' ? Colors.orange[50] : Colors.white,
-                                                  borderRadius: BorderRadius.circular(12),
-                                                  border: Border.all(
-                                                    color: _selectedVehicle == 'moto' ? Colors.orange[400]! : Colors.grey[200]!,
-                                                    width: 2,
-                                                  ),
-                                                ),
-                                                child: Column(
-                                                  children: [
-                                                    Icon(
-                                                      Icons.two_wheeler,
-                                                      size: 32,
-                                                      color: _selectedVehicle == 'moto' ? Colors.orange[600] : Colors.grey[400],
-                                                    ),
-                                                    SizedBox(height: 8),
-                                                    Text(
-                                                      'Moto',
-                                                      style: TextStyle(
-                                                        fontSize: 14,
-                                                        fontWeight: FontWeight.w600,
-                                                      ),
-                                                    ),
-                                                    Text(
-                                                      'Mais rápido',
-                                                      style: TextStyle(
-                                                        fontSize: 12,
-                                                        color: Colors.grey[500],
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          SizedBox(width: 12),
-                                          Expanded(
-                                            child: GestureDetector(
-                                              onTap: () {
-                                                setState(() {
-                                                  _selectedVehicle = 'carro';
-                                                });
-                                              },
-                                              child: Container(
-                                                padding: EdgeInsets.all(16),
-                                                decoration: BoxDecoration(
-                                                  color: _selectedVehicle == 'carro' ? Colors.orange[50] : Colors.white,
-                                                  borderRadius: BorderRadius.circular(12),
-                                                  border: Border.all(
-                                                    color: _selectedVehicle == 'carro' ? Colors.orange[400]! : Colors.grey[200]!,
-                                                    width: 2,
-                                                  ),
-                                                ),
-                                                child: Column(
-                                                  children: [
-                                                    Icon(
-                                                      Icons.directions_car,
-                                                      size: 32,
-                                                      color: _selectedVehicle == 'carro' ? Colors.orange[600] : Colors.grey[400],
-                                                    ),
-                                                    SizedBox(height: 8),
-                                                    Text(
-                                                      'Carro',
-                                                      style: TextStyle(
-                                                        fontSize: 14,
-                                                        fontWeight: FontWeight.w600,
-                                                      ),
-                                                    ),
-                                                    Text(
-                                                      'Mais espaço',
-                                                      style: TextStyle(
-                                                        fontSize: 12,
-                                                        color: Colors.grey[500],
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                SizedBox(height: 16),
+                                // Para ENVIAR: Endereço do usuário (remetente) em cima, "Entregar para" embaixo
                                 if (_activeTab == 'enviar') ...[
                                   GestureDetector(
                                     onTap: () {
                                       setState(() {
-                                        _showDestinationForm = true;
+                                        _showSenderForm = true;
                                       });
                                     },
                                     child: Container(
@@ -855,12 +767,25 @@ class _DeliveryAppState extends State<DeliveryApp> {
                                           ),
                                           SizedBox(width: 16),
                                           Expanded(
-                                            child: Text(
-                                              'Entregar para',
-                                              style: TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                              ),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Rua Olga Bernardes Amorim, 101',
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    color: Colors.grey[600],
+                                                  ),
+                                                ),
+                                                SizedBox(height: 2),
+                                                Text(
+                                                  'Gabriele · 47996412384',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.grey[400],
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
                                           Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
@@ -872,7 +797,7 @@ class _DeliveryAppState extends State<DeliveryApp> {
                                   GestureDetector(
                                     onTap: () {
                                       setState(() {
-                                        _showSenderForm = true;
+                                        _showDestinationForm = true;
                                       });
                                     },
                                     child: Container(
@@ -904,25 +829,12 @@ class _DeliveryAppState extends State<DeliveryApp> {
                                           ),
                                           SizedBox(width: 16),
                                           Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  'Rua Olga Bernardes Amorim, 101',
-                                                  style: TextStyle(
-                                                    fontSize: 14,
-                                                    color: Colors.grey[600],
-                                                  ),
-                                                ),
-                                                SizedBox(height: 2),
-                                                Text(
-                                                  'Gabriele · 47996412384',
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.grey[400],
-                                                  ),
-                                                ),
-                                              ],
+                                            child: Text(
+                                              'Entregar para',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
                                           ),
                                           Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
@@ -930,7 +842,9 @@ class _DeliveryAppState extends State<DeliveryApp> {
                                       ),
                                     ),
                                   ),
-                                ] else ...[
+                                ] 
+                                // Para RECEBER: "Enviar de" em cima, endereço do usuário (destinatário) embaixo
+                                else ...[
                                   GestureDetector(
                                     onTap: () {
                                       setState(() {
@@ -1039,6 +953,312 @@ class _DeliveryAppState extends State<DeliveryApp> {
                                     ),
                                   ),
                                 ],
+                                SizedBox(height: 16),
+                                
+                                // Seção de seleção de veículo - SÓ MOSTRA SE O ENDEREÇO DE ENTREGA FOI DEFINIDO
+                                if (_deliveryAddressSet) ...[
+                                  Container(
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(16),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black12,
+                                          blurRadius: 4,
+                                          offset: Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    padding: EdgeInsets.all(16),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Selecione o tipo de veículo',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                        SizedBox(height: 12),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  setState(() {
+                                                    _selectedVehicle = 'moto';
+                                                  });
+                                                },
+                                                child: Container(
+                                                  padding: EdgeInsets.all(16),
+                                                  decoration: BoxDecoration(
+                                                    color: _selectedVehicle == 'moto' ? Colors.orange[50] : Colors.white,
+                                                    borderRadius: BorderRadius.circular(12),
+                                                    border: Border.all(
+                                                      color: _selectedVehicle == 'moto' ? Colors.orange[400]! : Colors.grey[200]!,
+                                                      width: 2,
+                                                    ),
+                                                  ),
+                                                  child: Column(
+                                                    children: [
+                                                      Icon(
+                                                        Icons.two_wheeler,
+                                                        size: 32,
+                                                        color: _selectedVehicle == 'moto' ? Colors.orange[600] : Colors.grey[400],
+                                                      ),
+                                                      SizedBox(height: 8),
+                                                      Text(
+                                                        'Moto',
+                                                        style: TextStyle(
+                                                          fontSize: 14,
+                                                          fontWeight: FontWeight.w600,
+                                                        ),
+                                                      ),
+                                                      Text(
+                                                        'Mais rápido',
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                          color: Colors.grey[500],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            SizedBox(width: 12),
+                                            Expanded(
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  setState(() {
+                                                    _selectedVehicle = 'carro';
+                                                  });
+                                                },
+                                                child: Container(
+                                                  padding: EdgeInsets.all(16),
+                                                  decoration: BoxDecoration(
+                                                    color: _selectedVehicle == 'carro' ? Colors.orange[50] : Colors.white,
+                                                    borderRadius: BorderRadius.circular(12),
+                                                    border: Border.all(
+                                                      color: _selectedVehicle == 'carro' ? Colors.orange[400]! : Colors.grey[200]!,
+                                                      width: 2,
+                                                    ),
+                                                  ),
+                                                  child: Column(
+                                                    children: [
+                                                      Icon(
+                                                        Icons.directions_car,
+                                                        size: 32,
+                                                        color: _selectedVehicle == 'carro' ? Colors.orange[600] : Colors.grey[400],
+                                                      ),
+                                                      SizedBox(height: 8),
+                                                      Text(
+                                                        'Carro',
+                                                        style: TextStyle(
+                                                          fontSize: 14,
+                                                          fontWeight: FontWeight.w600,
+                                                        ),
+                                                      ),
+                                                      Text(
+                                                        'Mais espaço',
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                          color: Colors.grey[500],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(height: 16),
+                                ] else ...[
+                                  // Veículos bloqueados com ícone de cadeado
+                                  Container(
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(16),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black12,
+                                          blurRadius: 4,
+                                          offset: Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    padding: EdgeInsets.all(16),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Selecione o tipo de veículo',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                        SizedBox(height: 12),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Opacity(
+                                                opacity: 0.5,
+                                                child: Container(
+                                                  padding: EdgeInsets.all(16),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.grey[100],
+                                                    borderRadius: BorderRadius.circular(12),
+                                                    border: Border.all(
+                                                      color: Colors.grey[300]!,
+                                                      width: 2,
+                                                    ),
+                                                  ),
+                                                  child: Column(
+                                                    children: [
+                                                      Stack(
+                                                        children: [
+                                                          Icon(
+                                                            Icons.two_wheeler,
+                                                            size: 32,
+                                                            color: Colors.grey[400],
+                                                          ),
+                                                          Positioned(
+                                                            top: 0,
+                                                            right: 0,
+                                                            child: Icon(
+                                                              Icons.lock,
+                                                              size: 16,
+                                                              color: Colors.grey[500],
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      SizedBox(height: 8),
+                                                      Text(
+                                                        'Moto',
+                                                        style: TextStyle(
+                                                          fontSize: 14,
+                                                          fontWeight: FontWeight.w600,
+                                                          color: Colors.grey[500],
+                                                        ),
+                                                      ),
+                                                      Text(
+                                                        'Mais rápido',
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                          color: Colors.grey[400],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            SizedBox(width: 12),
+                                            Expanded(
+                                              child: Opacity(
+                                                opacity: 0.5,
+                                                child: Container(
+                                                  padding: EdgeInsets.all(16),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.grey[100],
+                                                    borderRadius: BorderRadius.circular(12),
+                                                    border: Border.all(
+                                                      color: Colors.grey[300]!,
+                                                      width: 2,
+                                                    ),
+                                                  ),
+                                                  child: Column(
+                                                    children: [
+                                                      Stack(
+                                                        children: [
+                                                          Icon(
+                                                            Icons.directions_car,
+                                                            size: 32,
+                                                            color: Colors.grey[400],
+                                                          ),
+                                                          Positioned(
+                                                            top: 0,
+                                                            right: 0,
+                                                            child: Icon(
+                                                              Icons.lock,
+                                                              size: 16,
+                                                              color: Colors.grey[500],
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      SizedBox(height: 8),
+                                                      Text(
+                                                        'Carro',
+                                                        style: TextStyle(
+                                                          fontSize: 14,
+                                                          fontWeight: FontWeight.w600,
+                                                          color: Colors.grey[500],
+                                                        ),
+                                                      ),
+                                                      Text(
+                                                        'Mais espaço',
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                          color: Colors.grey[400],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(height: 8),
+                                        Center(
+                                          child: Text(
+                                            'Disponível após selecionar endereço de entrega',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey[500],
+                                              fontStyle: FontStyle.italic,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(height: 16),
+                                ],
+                                
+                                // Botão Continuar - habilitado apenas se o endereço foi definido
+                                ElevatedButton(
+                                  onPressed: _deliveryAddressSet
+                                      ? () {
+                                          setState(() {
+                                            _showItemDetails = true;
+                                          });
+                                        }
+                                      : null,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: _deliveryAddressSet ? Colors.orange[400] : Colors.grey[400],
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                    padding: EdgeInsets.symmetric(vertical: 20),
+                                    minimumSize: Size(double.infinity, 0),
+                                  ),
+                                  child: Text(
+                                    _deliveryAddressSet ? 'Continuar' : 'Selecione o endereço de entrega',
+                                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -1113,6 +1333,186 @@ class _DeliveryAppState extends State<DeliveryApp> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildItemDetailsScreen() {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.chevron_left),
+          onPressed: () {
+            setState(() {
+              _showItemDetails = false;
+            });
+          },
+        ),
+        title: Text('Detalhes da entrega'),
+        backgroundColor: Colors.orange[400],
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Detalhes do item',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 20),
+              Text(
+                'Tipo de item',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  'Itens pessoais',
+                  'Alimentação',
+                  'Vestuário',
+                  'Eletrônicos',
+                  'Documentos',
+                  'Chaves',
+                  'Medicamentos',
+                  'Outros',
+                ].map((item) {
+                  return ChoiceChip(
+                    label: Text(item),
+                    selected: _selectedItemType == item,
+                    onSelected: (selected) {
+                      setState(() {
+                        _selectedItemType = item;
+                      });
+                    },
+                    selectedColor: Colors.orange[400],
+                    labelStyle: TextStyle(
+                      color: _selectedItemType == item ? Colors.white : Colors.black,
+                    ),
+                  );
+                }).toList(),
+              ),
+              SizedBox(height: 24),
+              Divider(),
+              SizedBox(height: 24),
+              Text(
+                'Valor do item',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(height: 12),
+              TextField(
+                decoration: InputDecoration(
+                  prefixText: 'R\$ ',
+                  hintText: 'Insira o valor do item',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                ),
+                keyboardType: TextInputType.number,
+                onChanged: (value) {
+                  setState(() {
+                    _itemValue = value;
+                  });
+                },
+              ),
+              SizedBox(height: 8),
+              Text(
+                'A NG EXPRESS não sugere envio de itens com valor superior a R\$500',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[500],
+                ),
+              ),
+              SizedBox(height: 24),
+              Divider(),
+              SizedBox(height: 24),
+              Text(
+                'Observações da entrega',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(height: 12),
+              TextField(
+                maxLines: 4,
+                maxLength: 100,
+                decoration: InputDecoration(
+                  hintText: 'Adicione uma descrição ou observações',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _deliveryNotes = value;
+                  });
+                },
+              ),
+              SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  '${_deliveryNotes.length}/100',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[500],
+                  ),
+                ),
+              ),
+              SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _showItemDetails = false;
+                    _showPayment = true;
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange[400],
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  minimumSize: Size(double.infinity, 0),
+                ),
+                child: Text(
+                  'Confirmar',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1238,7 +1638,9 @@ class _DeliveryAppState extends State<DeliveryApp> {
               ElevatedButton(
                 onPressed: () {
                   setState(() {
-                    _showPayment = true;
+                    _deliveryAddressSet = true; // Marca que o endereço foi definido
+                    _showDestinationForm = false;
+                    _showItemDetails = true;
                   });
                 },
                 style: ElevatedButton.styleFrom(
@@ -1251,7 +1653,7 @@ class _DeliveryAppState extends State<DeliveryApp> {
                   minimumSize: Size(double.infinity, 0),
                 ),
                 child: Text(
-                  'Continuar para pagamento',
+                  'Continuar para detalhes do item',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                 ),
               ),
@@ -1259,14 +1661,14 @@ class _DeliveryAppState extends State<DeliveryApp> {
           ),
         ),
       ),
-  );
-}
+    );
+  }
 
   Widget _buildSenderFormScreen() {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: Icon(Icons.chevron_left),
           onPressed: () {
             setState(() {
               _showSenderForm = false;
@@ -1553,6 +1955,7 @@ class _DeliveryAppState extends State<DeliveryApp> {
                               setState(() {
                                 _showPayment = false;
                                 _paymentMethod = '';
+                                _deliveryAddressSet = false; // Reseta para próxima entrega
                               });
                             },
                             child: Text('OK'),
@@ -2551,6 +2954,281 @@ class _DeliveryAppState extends State<DeliveryApp> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildProfileScreen() {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.chevron_left),
+          onPressed: () {
+            setState(() {
+              _showProfile = false;
+            });
+          },
+        ),
+        title: Text('Meu Perfil'),
+        backgroundColor: Colors.orange[400],
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              // Cabeçalho do perfil
+              Container(
+                padding: EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey[200]!),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Colors.red[400]!, Colors.pink[400]!],
+                        ),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          'G',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Gabriele',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Editar minhas informações',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.orange[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Seção Atividade
+              _buildProfileSection(
+                title: 'Atividade',
+                items: [
+                  _buildProfileItem(
+                    title: '99Pay',
+                    subtitle: 'A6 R\$377',
+                    icon: Icons.account_balance_wallet,
+                    iconColor: Colors.blue[600]!,
+                  ),
+                ],
+              ),
+              
+              // Seção principal
+              _buildProfileSection(
+                title: 'Ajuda',
+                items: [
+                  _buildProfileItem(
+                    title: 'Mensagens',
+                    icon: Icons.message,
+                    iconColor: Colors.blue[600]!,
+                  ),
+                  _buildProfileItem(
+                    title: 'Central de segurança',
+                    icon: Icons.security,
+                    iconColor: Colors.green[600]!,
+                  ),
+                  _buildProfileItem(
+                    title: 'Configurações',
+                    icon: Icons.settings,
+                    iconColor: Colors.grey[600]!,
+                  ),
+                ],
+              ),
+              
+              // Seção de convites
+              _buildProfileSection(
+                title: 'Convide',
+                items: [
+                  _buildProfileItem(
+                    title: 'Convide Amigos',
+                    icon: Icons.group_add,
+                    iconColor: Colors.purple[600]!,
+                  ),
+                  _buildProfileItem(
+                    title: 'Convide Motoristas',
+                    icon: Icons.directions_car,
+                    iconColor: Colors.orange[600]!,
+                  ),
+                ],
+              ),
+              
+              // Seção de oportunidades
+              _buildProfileSection(
+                title: 'Oportunidades',
+                items: [
+                  _buildProfileItem(
+                    title: 'Seja Motorista',
+                    icon: Icons.work,
+                    iconColor: Colors.orange[600]!,
+                  ),
+                ],
+              ),
+              
+              // Seção de benefícios
+              _buildProfileSection(
+                title: 'Benefícios',
+                items: [
+                  _buildProfileItem(
+                    title: 'Descontos',
+                    icon: Icons.discount,
+                    iconColor: Colors.red[600]!,
+                  ),
+                  _buildProfileItem(
+                    title: 'Escanear',
+                    icon: Icons.qr_code_scanner,
+                    iconColor: Colors.blue[600]!,
+                  ),
+                ],
+              ),
+              
+              // Botão de sair
+              Padding(
+                padding: EdgeInsets.all(20),
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _currentScreen = 'auth';
+                      _showProfile = false;
+                      _deliveryAddressSet = false; // Reseta o estado do endereço
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red[50],
+                    foregroundColor: Colors.red[600],
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    minimumSize: Size(double.infinity, 0),
+                  ),
+                  child: Text('Sair'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileSection({
+    required String title,
+    required List<Widget> items,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[600],
+            ),
+          ),
+        ),
+        Container(
+          color: Colors.white,
+          child: Column(
+            children: items,
+          ),
+        ),
+        SizedBox(height: 8),
+      ],
+    );
+  }
+
+  Widget _buildProfileItem({
+    required String title,
+    String? subtitle,
+    required IconData icon,
+    required Color iconColor,
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        color: Colors.white,
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Icon(icon, size: 20, color: iconColor),
+              ),
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  if (subtitle != null) ...[
+                    SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+          ],
+        ),
       ),
     );
   }
