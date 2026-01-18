@@ -1,607 +1,245 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart;
+import 'package:flutter/services.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'NG Entregas',
-      debugShowCheckedModeBanner: false,
+      title: 'NG EXPRESS',
       theme: ThemeData(
-        primaryColor: const Color(0xFFF97316),
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFF97316),
-          brightness: Brightness.light,
-        ),
-        scaffoldBackgroundColor: const Color(0XFFF9FAFB),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color.white,
-          foregroundColor: Color(0xFF111827),
+        primarySwatch: Colors.orange,
+        fontFamily: 'Roboto',
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.orange[400],
           elevation: 0,
-          centerTitle: true,
         ),
-        fontFamily: 'Inter',
       ),
-      home: const AppNavigatior(),
+      home: DeliveryApp(),
     );
-      
   }
 }
 
-class AppNavigator extends StatefulWidget {
-  const AppNavigator({super.key});
-
+class DeliveryApp extends StatefulWidget {
   @override
-  State<AppNavigator> createState() => _AppNavigatorState();
+  _DeliveryAppState createState() => _DeliveryAppState();
 }
 
-class _AppNavigatorState extends State<AppNavigator> {
+class _DeliveryAppState extends State<DeliveryApp> {
   String _currentScreen = 'splash';
-  String _authStep = 'phone';
-  String _phoneNumber = '';
-  String _smsCode = '';
-  
-  void _goToAuth() {
-    setState(() {
-      _currentScreen = 'auth';
-      _authStep = 'phone';
-    });
-  }
+  bool _isLogin = true;
+  String _activeTab = 'enviar';
+  bool _showDestinationForm = false;
+  bool _showSenderForm = false;
+  bool _showHistory = false;
+  bool _showWallet = false;
+  bool _showPixDeposit = false;
+  bool _showCardForm = false;
+  String _cardType = '';
+  bool _showPayment = false;
+  String _paymentMethod = '';
+  String _selectedVehicle = 'moto';
+  bool _pixCopied = false;
 
-  void _handlePhoneSubmitted(String phone) {
-    setState(() {
-      _phoneNumber = phone;
-      _authStep = 'sms';
-    });
-  }
+  Map<String, String> _authData = {
+    'name': '',
+    'email': '',
+    'phone': '',
+    'password': '',
+  };
 
-  void _handleSMSVerified(String code) {
+  void _copyPixCode() async {
+    const pixCode = '00020126580014br.gov.bcb.pix0136a1b2c3d4-e5f6-7890-abcd-ef1234567890520400005303986540525NG EXPRESS LTDA6009SAO PAULO62070503***63041D3D';
+    await Clipboard.setData(ClipboardData(text: pixCode));
     setState(() {
-      _smsCode = code;
-      if (code == '123456')
-      _currentScreen = 'main';
+      _pixCopied = true;
+    });
+    Future.delayed(Duration(seconds: 2), () {
+      setState(() {
+        _pixCopied = false;
+      });
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_currentScreen == 'splash')
-      return SplashScreen(onComplete: _goToAuth);
+    // Configurar orientação e layout responsivo
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+
+    if (_currentScreen == 'splash') {
+      return _buildSplashScreen();
     }
 
     if (_currentScreen == 'auth') {
-      if(_authStep == 'phone') {
-        return PhoneAuthScreen(onPhoneSubmitted: _handlePhoneSubmitted);
-        }
-        
-        if (_authStep == 'sms') {
-          return SMSVerifyScreen(
-            phoneNumber: _phoneNumber,
-            onCodeVerified: _handleSMSVerified,
-            )
-          }
-      }
-
-      return MainScreen(
-        userPhone: _phoneNumber,
-        onLogout: () {
-          setState(() {
-            _currentScreen = 'auth';
-            _authStep = 'phone';
-            _phoneNumber = '';
-            _smsCode = '';
-          });
-        },
-      );
+      return _buildAuthScreen();
     }
+
+    if (_showDestinationForm) {
+      return _buildDestinationFormScreen();
+    }
+
+    if (_showSenderForm) {
+      return _buildSenderFormScreen();
+    }
+
+    if (_showPayment) {
+      return _buildPaymentScreen();
+    }
+
+    if (_showPixDeposit) {
+      return _buildPixDepositScreen();
+    }
+
+    if (_showCardForm) {
+      return _buildCardFormScreen();
+    }
+
+    if (_showHistory) {
+      return _buildHistoryScreen();
+    }
+
+    if (_showWallet) {
+      return _buildWalletScreen();
+    }
+
+    return _buildMainScreen();
   }
 
-  // =============== SPLASH SCREEN ===============
-  class SplashScreen extends StatelessWidget {
-    final VoidCallback onComplete;
-
-    const SplashScreen({super.key, required this.onComplete});
-
-    @override
-    Widget build(BuildContext) {
-      return Scaffold(
-        body: Container(
-          decoration: const BoxDecoration(
+  Widget _buildSplashScreen() {
+    return Scaffold(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFF97316),
-              Color(0xFFEA580C),
-              Color(0xFFDC2626),
-            ],
+            colors: [Colors.orange[400]!, Colors.orange[500]!, Colors.deepOrange[400]!],
           ),
         ),
-        child: Center(
+        child: SafeArea(
           child: Column(
-            mainAxisAligment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                width: 120,
-                height: 120,
+                width: 160,
+                height: 160,
                 decoration: BoxDecoration(
-                  color: Color.white,
-                  borderRadius: BorderRadius.circular(30),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(60),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
+                      color: Colors.black26,
                       blurRadius: 20,
-                      spreadRadius: 5,
+                      offset: Offset(0, 10),
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.local_shipping,
-                  size: 60,
-                  color: Color(0xFFF97316),
+                child: Center(
+                  child: Image.asset(
+                    'assets/logo.jpeg',
+                    width: 125,
+                    height: 125,
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
-              const SizedBox(height: 32),
-              const Text(
+              SizedBox(height: 32),
+              Text(
                 'NG',
-                style: TextSTyle(
-                  fontSize: 64,
-                  fontWeight: FontWeight.bold,
-                  color: Color.white,
-                ),
-              ),
-              const Text(
-                'Entregas',
                 style: TextStyle(
-                  fontSize: 36,
+                  fontSize: 48,
                   fontWeight: FontWeight.bold,
-                  color: Color.white,
+                  color: Colors.white,
                 ),
               ),
-              const SizedBox (height: 48),
-              const Text(
+              Text(
+                'EXPRESS',
+                style: TextStyle(
+                  fontSize: 40,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(height: 24),
+              Text(
                 'Seu pedido, nossa missão',
                 style: TextStyle(
                   fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                  color: Color.white,
+                  color: Colors.white.withOpacity(0.9),
                 ),
               ),
-              const SizedBox(height: 60),
-              ElevatedButton(
-                onPressed: onComplete,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFFF97316),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 48,
-                    vertical: 16,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(50),
-                  ),
-                  elevation: 5,
-                ),
-                child: const Text(
-                  'Começar',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        )
-      );
-    }
-  }
-
-  // =============== PHONE AUTH SCREEN ===============
-  class PhoneAuthScreen extends StatefulWidget {
-    final Function(String) onPhoneSubmitted;
-
-    const PhoneAuthScreen({super.key, required this.onPhoneSubmitted});
-
-    @override
-    State<PhoneAuthScreen> createState() => _PhoneAuthScreenState();
-  }
-
-  class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
-    final _phoneController = TextEditingController();
-    final _formKey = GlobalKey<FormState>();
-
-    String _formatPhone(String value) {
-      value = value.replaceAll(RegExp(r'[ˆ\d]'), '');
-      if (value.length <= 11) {
-        if (value.length > 2) {
-          value = '(${value.substring(0, 2)}) ${value.substring(2)}';
-      }
-      if (value.length > 10) {
-        value = '${value.substring(0, 10)}-${value.substring(10)}';
-      }
-    }
-    return value;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            Container(
-              height: 200,
-              decoration: const BoxDecoration(
-                  color: Color(0xFFF97316),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(30),
-                    bottomRight: Radius.circular(30),
+              SizedBox(height: 60),
+              SizedBox(
+                width: 280,
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _currentScreen = 'auth';
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.orange[600],
+                    padding: EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
                     ),
+                    elevation: 5,
                   ),
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Icon(
-                            Icons.local_shipping,
-                            size: 40,
-                            color: Color(0xFFF97316),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'NG Entregas',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                         ),
-                        ),
-                      ],
+                  child: Text(
+                    'Começar',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
-                  ),
-                ),
-
-                // Conteúdo
-
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        Children: [
-                          const SizedBox(height: 24),
-                          const Text(
-                            'Insira seu número de telefone',
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF111827),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Enviaremos um código de 6 dígitos por SMS para autenticação',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Color(0xFF6B7280),
-                            ),
-                          ),
-                          const SizedBox(height: 40),
-
-                          // Campo de telefone
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: Colors.grey.shade200,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 16),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.phone,
-                                        color: Color.grey,
-                                      ),
-                                      SizedBox(width: 8),
-                                      Text(
-                                        '+55',
-                                        style: TextStyle(
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: _phoneController,
-                                    keyboardType: TextInputType.phone,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly,
-                                      LengthLimitingTextInputFormatter(11),
-                                    ],
-                                    decoration: const InputDecoration(
-                                      border: InputBorder.none,
-                                      contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 20,
-                                      ),
-                                      hintText: '(00) 00000-0000',
-                                      hintStyle: TextStyle(
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                    ),
-                                    onChanged: (value) {
-                                      final formatted = _formatPhone(value);
-                                      if (formatted != value) {
-                                        _phoneController.value = 
-                                            _phoneController.value.copyWith(
-                                            text: formatted,
-                                            selection: TextSelection.collapsed(
-                                              offset: formatted.length),
-                                        );
-                                      }
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-
-                          // Botão continuar
-                          SizedBox(
-                            width: double.infinity,
-                            height: 56,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                if (_phoneController.text.isNotEmpty) {
-                                  widget.onPhoneSubmitted(_phoneController.text);
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFF97316),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            child: const Text(
-                              'Continuar',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        // Divisor
-
-                        Row(
-                          children: [
-                            Expanded(
-                            child: Divider(
-                              color: Colors.grey.shade300,
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              child: Text(
-                                'ou',
-                                style: TextStyle(
-                                  color: Colors.grey.shade500,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: Divider(
-                                color: Colors.grey.shade300,
-                              ),
-                            ),
-                          ],
-                        ),
-                        
-                        const SizedBox(height: 24),
-
-                        // Botão Google
-                          SizedBox(
-                            width: double.infinity,
-                            height: 56,
-                            child: OutlinedButton(
-                              onPressed: () {
-                              _phoneController.text = '(47) 99641-2384';
-                              widget.onPhoneSubmitted(_phoneController.text);
-                              },
-                              style: OutlinedButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                side: BorderSide(color: Colors.grey.shade300,
-                                width: 2
-                              ),
-                          ),
-                              child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  width: 24,
-                                  height: 24,
-                                  decoration: const BoxDecoration(
-                                    image: DecorationImage(
-                                      image: NetworkImage(
-                                      'https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png',
-                                      ),
-                                   ),
-                                 ),
-                               ),
-                                const SizedBox(width: 12),
-                                const Text(
-                                  'Continuar com o Google',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 40),
-
-                      // Termos e condições
-                      const Text(
-                        'Ao continuar, você concorda com nossos Termos de Uso e Política de Privacidade.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF6B7280),
-                        ),
-                      ),
-                    ],
                   ),
                 ),
               ),
             ],
           ),
         ),
-      );
-    }
+      ),
+    );
   }
 
-  // =============== SMS VERIFY SCREEN ===============
-  class SMSVerifyScreen extends StatefulWidget {
-    final String phoneNumber;
-    final Function(String) onCodeVerified;
-
-    const SMSVerifyScreen({
-      super.key,
-      required this.phone
-      required this.onCodeVerified,
-    });
-
-    @override
-    State<SMSVerifyScreenState> createState() => _SMSVerifyScreenState();
-  }
-
-  class _SMSVerifyScreenState extends State<SMSVerifyScreen> {
-    final List<TextEditingController> _digitControllers = List.generate(6, (_) => TextEditingController());
-    final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
-    String _code = '';
-
-    @override
-    void initState() {
-      super.initState();
-      for (int i = 0; i < 6; i++) {
-        _digitControllers[i].addListener(() {
-          if (_digitControllers[i].text.isNotEmpty && i < 5) {
-            _focusNodes[i + 1].requestFocus();
-          }
-          _updateCode();
-        });
-      }
-    }
-
-    void _updateCode() {
-      String newCode = '';
-      for (var controller in _digitControllers) {
-        newCode += controller.text;
-      }
-      setState(() => _code = newCode);
-      if (newCode.length == 6) {
-        widget.onCodeVerified(newCode);
-      }
-    }
-
-    String _formatPhone(String value) {
-      String Cleaned = phone.replaceAll(RegExp('r[ˆ\d]'), '');
-      if (cleaned.length == 11) {
-        return '(${cleaned.substring(0, 2)}) ${cleaned.substring(2, 7)}-${cleaned.substring(7)}';
-    }
-    return phone;
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildAuthScreen() {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
       body: SafeArea(
         child: Column(
           children: [
-            //Header
             Container(
-              height: 180,
-              decoration: const BoxDecoration(
-                color: Color(0xFFF97316),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
-                ),
-              ),
-              child: Stack (
+              width: double.infinity,
+              color: Colors.orange[400],
+              padding: EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+              child: Column(
                 children: [
-                  // Botão voltar
-                  Positioned(
-                    left: 16,
-                    top: 16,
-                    child: IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon (
-                        Icons.arrow_back,
-                        color: Colors.white,
-                        size: 28,
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Center(
+                      child: Image.asset(
+                        'assets/logo.jpeg',
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.contain,
                       ),
                     ),
                   ),
-                  Center(
-                    child: Column(
-                      mainAxisAligment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Icon(
-                            Icons.smartphone,
-                            size: 40,
-                            color: Color(0xFFF97316),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Verificação',
+                  SizedBox(height: 16),
+                  Text(
+                    'NG EXPRESS',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -611,117 +249,1551 @@ class _AppNavigatorState extends State<AppNavigator> {
                 ],
               ),
             ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                _isLogin = true;
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _isLogin ? Colors.orange[400] : Colors.white,
+                              foregroundColor: _isLogin ? Colors.white : Colors.grey[600],
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                            ),
+                            child: Text(
+                              'Entrar',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                _isLogin = false;
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: !_isLogin ? Colors.orange[400] : Colors.white,
+                              foregroundColor: !_isLogin ? Colors.white : Colors.grey[600],
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                            ),
+                            child: Text(
+                              'Cadastrar',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 24),
+                    if (!_isLogin) ...[
+                      TextField(
+                        decoration: InputDecoration(
+                          prefixIcon: Icon(Icons.person, color: Colors.grey[400]),
+                          hintText: 'Nome completo',
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey[200]!),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                          ),
+                          contentPadding: EdgeInsets.symmetric(
+                            vertical: 16,
+                            horizontal: 12,
+                          ),
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            _authData['name'] = value;
+                          });
+                        },
+                      ),
+                      SizedBox(height: 16),
+                    ],
+                    TextField(
+                      decoration: InputDecoration(
+                        prefixIcon: Icon(Icons.email, color: Colors.grey[400]),
+                        hintText: 'E-mail',
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey[200]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          vertical: 16,
+                          horizontal: 12,
+                        ),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          _authData['email'] = value;
+                        });
+                      },
+                    ),
+                    SizedBox(height: 16),
+                    TextField(
+                      decoration: InputDecoration(
+                        prefixIcon: Icon(Icons.phone, color: Colors.grey[400]),
+                        hintText: 'Telefone (obrigatório)',
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey[200]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          vertical: 16,
+                          horizontal: 12,
+                        ),
+                      ),
+                      keyboardType: TextInputType.phone,
+                      onChanged: (value) {
+                        setState(() {
+                          _authData['phone'] = value;
+                        });
+                      },
+                    ),
+                    SizedBox(height: 16),
+                    TextField(
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        prefixIcon: Icon(Icons.lock, color: Colors.grey[400]),
+                        hintText: 'Senha',
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey[200]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          vertical: 16,
+                          horizontal: 12,
+                        ),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          _authData['password'] = value;
+                        });
+                      },
+                    ),
+                    SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _currentScreen = 'main';
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange[400],
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: 18),
+                        ),
+                        child: Text(
+                          _isLogin ? 'Entrar' : 'Criar conta',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(child: Divider(color: Colors.grey[300])),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          child: Text('ou', style: TextStyle(color: Colors.grey[500])),
+                        ),
+                        Expanded(child: Divider(color: Colors.grey[300])),
+                      ],
+                    ),
+                    SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _currentScreen = 'main';
+                          });
+                        },
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
+                          side: BorderSide(color: Colors.grey[200]!, width: 2),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: 18),
+                        ),
+                        icon: Icon(Icons.g_mobiledata, size: 24),
+                        label: Text(
+                          'Continuar com Google',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
-      Expanded(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 24),
-              const Text(
-                'Digite o código de 6 dígitos',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF111827),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Enviamos um SMS para\n${_formatPhone(widget.phoneNumber)}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF6B7280),
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 48),
+    );
+  }
 
-              // Campos de código
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(6, (index) {
-                  return SizedBox(
-                    width: 50,
-                    height: 60,
-                    child: TextField(
-                      controller: _digitControllers[index],
-                      focusNode: _focusNodes[index],
-                      textAlign: TextAlign.center,
-                      maxLength: 1,
-                      keyboardType: TextInputType.number,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+  Widget _buildMainScreen() {
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            Container(
+              width: double.infinity,
+              color: Colors.orange[400],
+              padding: EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+              child: Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Colors.red[400]!, Colors.pink[400]!],
                       ),
-                      decoration: InputDecoration(
-                        counterText: '',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: _code.length > index ? const Color(0xFFF97316) : Colors.grey.shade300,
-                            width: 2,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Text(
+                    'Olá, Gabriele!',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      color: Colors.white,
+                      padding: EdgeInsets.only(top: 40, bottom: 32),
+                      child: Column(
+                        children: [
+                          Text(
+                            'VOCÊ PRECISA,',
+                            style: TextStyle(
+                              fontSize: 20,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.orange[400],
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                padding: EdgeInsets.all(8),
+                                child: Icon(Icons.chevron_left, size: 24, color: Colors.black),
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'NG EXPRESS',
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 32),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Stack(
+                                children: [
+                                  Icon(
+                                    Icons.two_wheeler,
+                                    size: 96,
+                                    color: Colors.grey[400],
+                                  ),
+                                  Positioned(
+                                    bottom: -5,
+                                    right: -5,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.orange[400],
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      padding: EdgeInsets.all(5),
+                                      child: Icon(Icons.check,
+                                          size: 24, color: Colors.black),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(width: 40),
+                              Stack(
+                                children: [
+                                  Icon(
+                                    Icons.directions_car,
+                                    size: 96,
+                                    color: Colors.grey[400],
+                                  ),
+                                  Positioned(
+                                    bottom: -5,
+                                    right: -5,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.orange[400],
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      padding: EdgeInsets.all(5),
+                                      child: Icon(Icons.check,
+                                          size: 24, color: Colors.black),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      color: Colors.white,
+                      child: Column(
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: TextButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        _activeTab = 'enviar';
+                                      });
+                                    },
+                                    style: TextButton.styleFrom(
+                                      padding: EdgeInsets.symmetric(vertical: 16),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.zero,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Text(
+                                          'Enviar',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w600,
+                                            color: _activeTab == 'enviar' ? Colors.black : Colors.grey[400],
+                                          ),
+                                        ),
+                                        SizedBox(height: 4),
+                                        if (_activeTab == 'enviar')
+                                          Container(
+                                            height: 4,
+                                            decoration: BoxDecoration(
+                                              color: Colors.orange[400],
+                                              borderRadius: BorderRadius.only(
+                                                topLeft: Radius.circular(2),
+                                                topRight: Radius.circular(2),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: TextButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        _activeTab = 'receber';
+                                      });
+                                    },
+                                    style: TextButton.styleFrom(
+                                      padding: EdgeInsets.symmetric(vertical: 16),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.zero,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Text(
+                                          'Receber',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w600,
+                                            color: _activeTab == 'receber' ? Colors.black : Colors.grey[400],
+                                          ),
+                                        ),
+                                        SizedBox(height: 4),
+                                        if (_activeTab == 'receber')
+                                          Container(
+                                            height: 4,
+                                            decoration: BoxDecoration(
+                                              color: Colors.orange[400],
+                                              borderRadius: BorderRadius.only(
+                                                topLeft: Radius.circular(2),
+                                                topRight: Radius.circular(2),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.all(20),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black12,
+                                        blurRadius: 4,
+                                        offset: Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  padding: EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Selecione o tipo de veículo',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                      SizedBox(height: 12),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: GestureDetector(
+                                              onTap: () {
+                                                setState(() {
+                                                  _selectedVehicle = 'moto';
+                                                });
+                                              },
+                                              child: Container(
+                                                padding: EdgeInsets.all(16),
+                                                decoration: BoxDecoration(
+                                                  color: _selectedVehicle == 'moto' ? Colors.orange[50] : Colors.white,
+                                                  borderRadius: BorderRadius.circular(12),
+                                                  border: Border.all(
+                                                    color: _selectedVehicle == 'moto' ? Colors.orange[400]! : Colors.grey[200]!,
+                                                    width: 2,
+                                                  ),
+                                                ),
+                                                child: Column(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.two_wheeler,
+                                                      size: 32,
+                                                      color: _selectedVehicle == 'moto' ? Colors.orange[600] : Colors.grey[400],
+                                                    ),
+                                                    SizedBox(height: 8),
+                                                    Text(
+                                                      'Moto',
+                                                      style: TextStyle(
+                                                        fontSize: 14,
+                                                        fontWeight: FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      'Mais rápido',
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        color: Colors.grey[500],
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(width: 12),
+                                          Expanded(
+                                            child: GestureDetector(
+                                              onTap: () {
+                                                setState(() {
+                                                  _selectedVehicle = 'carro';
+                                                });
+                                              },
+                                              child: Container(
+                                                padding: EdgeInsets.all(16),
+                                                decoration: BoxDecoration(
+                                                  color: _selectedVehicle == 'carro' ? Colors.orange[50] : Colors.white,
+                                                  borderRadius: BorderRadius.circular(12),
+                                                  border: Border.all(
+                                                    color: _selectedVehicle == 'carro' ? Colors.orange[400]! : Colors.grey[200]!,
+                                                    width: 2,
+                                                  ),
+                                                ),
+                                                child: Column(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.directions_car,
+                                                      size: 32,
+                                                      color: _selectedVehicle == 'carro' ? Colors.orange[600] : Colors.grey[400],
+                                                    ),
+                                                    SizedBox(height: 8),
+                                                    Text(
+                                                      'Carro',
+                                                      style: TextStyle(
+                                                        fontSize: 14,
+                                                        fontWeight: FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      'Mais espaço',
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        color: Colors.grey[500],
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(height: 16),
+                                if (_activeTab == 'enviar') ...[
+                                  GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _showDestinationForm = true;
+                                      });
+                                    },
+                                    child: Container(
+                                      width: double.infinity,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(16),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black12,
+                                            blurRadius: 4,
+                                            offset: Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      padding: EdgeInsets.all(16),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 12,
+                                            height: 12,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: Colors.orange[400],
+                                            ),
+                                          ),
+                                          SizedBox(width: 16),
+                                          Expanded(
+                                            child: Text(
+                                              'Entregar para',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 16),
+                                  GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _showSenderForm = true;
+                                      });
+                                    },
+                                    child: Container(
+                                      width: double.infinity,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(16),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black12,
+                                            blurRadius: 4,
+                                            offset: Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      padding: EdgeInsets.all(16),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 12,
+                                            height: 12,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: Colors.orange[400]!,
+                                                width: 2,
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(width: 16),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Rua Olga Bernardes Amorim, 101',
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    color: Colors.grey[600],
+                                                  ),
+                                                ),
+                                                SizedBox(height: 2),
+                                                Text(
+                                                  'Gabriele · 47996412384',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.grey[400],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ] else ...[
+                                  GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _showSenderForm = true;
+                                      });
+                                    },
+                                    child: Container(
+                                      width: double.infinity,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(16),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black12,
+                                            blurRadius: 4,
+                                            offset: Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      padding: EdgeInsets.all(16),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 12,
+                                            height: 12,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: Colors.orange[400],
+                                            ),
+                                          ),
+                                          SizedBox(width: 16),
+                                          Expanded(
+                                            child: Text(
+                                              'Enviar de',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 16),
+                                  GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _showDestinationForm = true;
+                                      });
+                                    },
+                                    child: Container(
+                                      width: double.infinity,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(16),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black12,
+                                            blurRadius: 4,
+                                            offset: Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      padding: EdgeInsets.all(16),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 12,
+                                            height: 12,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: Colors.orange[400]!,
+                                                width: 2,
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(width: 16),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Rua Olga Bernardes Amorim, 101',
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    color: Colors.grey[600],
+                                                  ),
+                                                ),
+                                                SizedBox(height: 2),
+                                                Text(
+                                                  'Gabriele · 47996412384',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.grey[400],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        height: 80,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Colors.grey[200]!)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _showHistory = true;
+                });
+              },
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.history, size: 24, color: Colors.grey[400]),
+                  SizedBox(height: 4),
+                  Text(
+                    'Histórico',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[400],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              margin: EdgeInsets.only(bottom: 24),
+              child: FloatingActionButton(
+                onPressed: () {},
+                backgroundColor: Colors.orange[400],
+                child: Icon(Icons.search, size: 28),
+                elevation: 4,
+              ),
+            ),
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _showWallet = true;
+                });
+              },
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.payments, size: 24, color: Colors.grey[400]),
+                  SizedBox(height: 4),
+                  Text(
+                    'Carteira',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[400],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDestinationFormScreen() {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.chevron_left),
+          onPressed: () {
+            setState(() {
+              _showDestinationForm = false;
+            });
+          },
+        ),
+        title: Text('Informações do destinatário'),
+        backgroundColor: Colors.orange[400],
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            children: [
+              TextField(
+                decoration: InputDecoration(
+                  labelText: 'Endereço*',
+                  hintText: 'Selecionar endereço de entrega',
+                  suffixIcon: Icon(Icons.arrow_forward_ios),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                ),
+                readOnly: true,
+                onTap: () {
+                  // Implement address selection
+                },
+              ),
+              SizedBox(height: 16),
+              TextField(
+                decoration: InputDecoration(
+                  labelText: 'Detalhes do endereço',
+                  hintText: 'Ex.: bloco A, apartamento 201',
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+              TextField(
+                decoration: InputDecoration(
+                  labelText: 'Nome para contato*',
+                  hintText: 'Digite o nome do destinatário',
+                  suffixIcon: Icon(Icons.person),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+              TextField(
+                decoration: InputDecoration(
+                  labelText: 'Número de telefone*',
+                  hintText: 'Telefone do destinatário',
+                  prefix: Container(
+                    padding: EdgeInsets.only(right: 8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('🇧🇷'),
+                        SizedBox(width: 4),
+                        Text('+55'),
+                      ],
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                ),
+                keyboardType: TextInputType.phone,
+              ),
+              SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _showPayment = true;
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange[400],
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  minimumSize: Size(double.infinity, 0),
+                ),
+                child: Text(
+                  'Continuar para pagamento',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+  );
+}
+
+  Widget _buildSenderFormScreen() {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            setState(() {
+              _showSenderForm = false;
+            });
+          },
+        ),
+        title: Text('Informações do remetente'),
+        backgroundColor: Colors.orange[400],
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            children: [
+              TextField(
+                decoration: InputDecoration(
+                  labelText: 'Endereço*',
+                  hintText: 'Selecionar endereço de coleta',
+                  suffixIcon: Icon(Icons.arrow_forward_ios),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                ),
+                readOnly: true,
+                onTap: () {
+                  // Implement address selection
+                },
+              ),
+              SizedBox(height: 16),
+              TextField(
+                decoration: InputDecoration(
+                  labelText: 'Detalhes do endereço',
+                  hintText: 'Ex.: bloco A, apartamento 201',
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+              TextField(
+                decoration: InputDecoration(
+                  labelText: 'Nome para contato*',
+                  hintText: 'Digite o nome do remetente',
+                  suffixIcon: Icon(Icons.person),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+              TextField(
+                decoration: InputDecoration(
+                  labelText: 'Número de telefone*',
+                  hintText: 'Telefone do remetente',
+                  prefix: Container(
+                    padding: EdgeInsets.only(right: 8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('🇧🇷'),
+                        SizedBox(width: 4),
+                        Text('+55'),
+                      ],
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                ),
+                keyboardType: TextInputType.phone,
+              ),
+              SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _showSenderForm = false;
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange[400],
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  minimumSize: Size(double.infinity, 0),
+                ),
+                child: Text(
+                  'Confirmar',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentScreen() {
+    double ridePrice = _selectedVehicle == 'moto' ? 15.00 : 28.00;
+
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.chevron_left),
+          onPressed: () {
+            setState(() {
+              _showPayment = false;
+            });
+          },
+        ),
+        title: Text('Pagamento'),
+        backgroundColor: Colors.orange[400],
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Resumo da corrida',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    ),
+                    SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Icon(
+                          _selectedVehicle == 'moto' ? Icons.two_wheeler : Icons.directions_car,
+                          color: Colors.grey[500],
+                        ),
+                        SizedBox(width: 12),
+                        Text(
+                          _selectedVehicle == 'moto' ? 'Entrega de Moto' : 'Entrega de Carro',
+                          style: TextStyle(color: Colors.grey[700]),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 16),
+                    Divider(),
+                    SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Valor total', style: TextStyle(color: Colors.grey[600])),
+                        Text(
+                          'R\$ ${ridePrice.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.orange[600],
                           ),
                         ),
-                      ),
-                    );
-                  }),
-                ),
-                const SizedBox(height: 40),
-
-                // Botão verificar
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _code.length == 6
-                    ? () => widget.onCodeVerified(_code)
-                    : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF97316),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
+                      ],
                     ),
-                    child: const Text(
-                      'Verificar código',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                  ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 40),
-
-              // Mensagem de demonstração
+              SizedBox(height: 20),
               Container(
-                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.blue.shade100,
-                  ),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(
-                      Icons.lightbulb_outline,
-                      color: Colors.blue,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
                     ),
-                    SizedBox(width: 12),
+                  ],
+                ),
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Forma de pagamento',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    ),
+                    SizedBox(height: 16),
+                    _buildPaymentOption(
+                      title: 'Carteira Digital',
+                      subtitle: 'Saldo: R\$ 125,00',
+                      icon: Icons.account_balance_wallet,
+                      value: 'wallet',
+                      color: Colors.grey[600]!,
+                    ),
+                    SizedBox(height: 12),
+                    _buildPaymentOption(
+                      title: 'PIX',
+                      subtitle: 'Pagamento instantâneo',
+                      icon: Icons.pix,
+                      value: 'pix',
+                      color: Colors.blue[600]!,
+                    ),
+                    SizedBox(height: 12),
+                    _buildPaymentOption(
+                      title: 'Cartão',
+                      subtitle: 'Crédito ou Débito',
+                      icon: Icons.credit_card,
+                      value: 'card',
+                      color: Colors.purple[600]!,
+                    ),
+                    SizedBox(height: 12),
+                    _buildPaymentOption(
+                      title: 'Dinheiro',
+                      subtitle: 'Pagar na entrega',
+                      icon: Icons.money,
+                      value: 'cash',
+                      color: Colors.green[600]!,
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: () {
+                  if (_paymentMethod.isNotEmpty) {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text('Sucesso'),
+                        content: Text('Pagamento confirmado! Procurando motorista...'),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              setState(() {
+                                _showPayment = false;
+                                _paymentMethod = '';
+                              });
+                            },
+                            child: Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
+                  } else {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text('Atenção'),
+                        content: Text('Por favor, selecione uma forma de pagamento'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange[400],
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  minimumSize: Size(double.infinity, 0),
+                ),
+                child: Text(
+                  'Confirmar pagamento',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentOption({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required String value,
+    required Color color,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _paymentMethod = value;
+        });
+      },
+      child: Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _paymentMethod == value ? Colors.orange[50] : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: _paymentMethod == value ? Colors.orange[400]! : Colors.grey[200]!,
+            width: 2,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: _paymentMethod == value ? Colors.orange[400]! : Colors.grey[300]!,
+                  width: 2,
+                ),
+              ),
+              child: _paymentMethod == value
+                  ? Center(
+                      child: Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.orange[400],
+                        ),
+                      ),
+                    )
+                  : null,
+            ),
+            SizedBox(width: 16),
+            Icon(icon, color: color),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: TextStyle(fontWeight: FontWeight.w600)),
+                  Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPixDepositScreen() {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.chevron_left),
+          onPressed: () {
+            setState(() {
+              _showPixDeposit = false;
+            });
+          },
+        ),
+        title: Text('Depósito via PIX'),
+        backgroundColor: Colors.orange[400],
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    Text(
+                      'Escaneie o QR Code',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    ),
+                    SizedBox(height: 16),
+                    Container(
+                      width: 200,
+                      height: 200,
+                      color: Colors.grey[100],
+                      child: Icon(Icons.qr_code, size: 150, color: Colors.grey[800]),
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Abra o app do seu banco e escaneie o código',
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(child: Divider(color: Colors.grey[300])),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Text('ou', style: TextStyle(color: Colors.grey[500])),
+                  ),
+                  Expanded(child: Divider(color: Colors.grey[300])),
+                ],
+              ),
+              SizedBox(height: 24),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'PIX Copia e Cola',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    ),
+                    SizedBox(height: 16),
+                    Container(
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: SelectableText(
+                        '00020126580014br.gov.bcb.pix0136a1b2c3d4-e5f6-7890-abcd-ef1234567890520400005303986540525NG EXPRESS LTDA6009SAO PAULO62070503***63041D3D',
+                        style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: _copyPixCode,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange[400],
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        minimumSize: Size(double.infinity, 0),
+                      ),
+                      icon: _pixCopied ? Icon(Icons.check) : Icon(Icons.copy),
+                      label: Text(_pixCopied ? 'Copiado!' : 'Copiar código PIX'),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 24),
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  border: Border.all(color: Colors.blue[200]!),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.lightbulb, color: Colors.blue[800]),
+                    SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Para fins de demonstração, use o código 123456 para autenticação.',
-                        style: TextStyle(
-                          color: Colors(0xFF1E40AF),
-                          fontWeight: FontWeight.w500,
-                        ),
+                        'Dica: Após realizar o pagamento, o saldo será creditado automaticamente em até 2 minutos.',
+                        style: TextStyle(color: Colors.blue[800]),
                       ),
                     ),
                   ],
@@ -730,394 +1802,756 @@ class _AppNavigatorState extends State<AppNavigator> {
             ],
           ),
         ),
+      ),
+    );
+  }
 
+  Widget _buildCardFormScreen() {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.chevron_left),
+          onPressed: () {
+            setState(() {
+              _showCardForm = false;
+              _cardType = '';
+            });
+          },
+        ),
+        title: Text(_cardType == 'credit' ? 'Cartão de Crédito' : 'Cartão de Débito'),
+        backgroundColor: Colors.orange[400],
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Colors.grey[800]!, Colors.grey[900]!],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 10,
+                      offset: Offset(0, 5),
+                    ),
+                  ],
+                ),
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Colors.orange[400],
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    SizedBox(height: 32),
+                    Text(
+                      '•••• •••• •••• ••••',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontFamily: 'monospace',
+                        color: Colors.white,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                    SizedBox(height: 32),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Nome do titular',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white.withOpacity(0.7),
+                              ),
+                            ),
+                            Text(
+                              'SEU NOME',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              'Validade',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white.withOpacity(0.7),
+                              ),
+                            ),
+                            Text(
+                              'MM/AA',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 24),
+              TextField(
+                decoration: InputDecoration(
+                  labelText: 'Número do cartão*',
+                  hintText: '0000 0000 0000 0000',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+              TextField(
+                decoration: InputDecoration(
+                  labelText: 'Nome do titular*',
+                  hintText: 'Como está no cartão',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      decoration: InputDecoration(
+                        labelText: 'Validade*',
+                        hintText: 'MM/AA',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          vertical: 16,
+                          horizontal: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: TextField(
+                      decoration: InputDecoration(
+                        labelText: 'CVV*',
+                        hintText: '000',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          vertical: 16,
+                          horizontal: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _showCardForm = false;
+                    _showWallet = false;
+                    _cardType = '';
+                  });
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text('Sucesso'),
+                      content: Text('Cartão salvo com sucesso!'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange[400],
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  minimumSize: Size(double.infinity, 0),
+                ),
+                child: Text(
+                  'Salvar cartão',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHistoryScreen() {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.chevron_left),
+          onPressed: () {
+            setState(() {
+              _showHistory = false;
+            });
+          },
+        ),
+        title: Text('Histórico de Entregas'),
+        backgroundColor: Colors.orange[400],
+      ),
+      body: SafeArea(
+        child: ListView(
+          padding: EdgeInsets.all(16),
+          children: [
+            _buildHistoryCard(
+              id: '#1234',
+              date: '14/01/2026 - 11:30',
+              status: 'Concluída',
+              statusColor: Colors.green[100]!,
+              statusTextColor: Colors.green[700]!,
+              origin: 'Rua Olga Bernardes Amorim, 101',
+              destination: 'Av. Santos Dumont, 500',
+              vehicle: 'Honda CG 160',
+              plate: 'ABC-1234',
+              driver: 'Carlos Silva',
+              price: 15.00,
+              icon: Icons.two_wheeler,
+            ),
+            SizedBox(height: 12),
+            _buildHistoryCard(
+              id: '#1233',
+              date: '13/01/2026 - 15:45',
+              status: 'Concluída',
+              statusColor: Colors.green[100]!,
+              statusTextColor: Colors.green[700]!,
+              origin: 'Centro, 234',
+              destination: 'Bairro Industrial, 890',
+              vehicle: 'Fiat Uno',
+              plate: 'XYZ-5678',
+              driver: 'Maria Santos',
+              price: 28.00,
+              icon: Icons.directions_car,
+            ),
+            SizedBox(height: 12),
+            _buildHistoryCard(
+              id: '#1232',
+              date: '12/01/2026 - 09:20',
+              status: 'Cancelada',
+              statusColor: Colors.red[100]!,
+              statusTextColor: Colors.red[700]!,
+              origin: 'Rua das Flores, 67',
+              destination: 'Av. Principal, 123',
+              vehicle: 'Yamaha Fazer 250',
+              plate: 'DEF-9012',
+              driver: 'João Pereira',
+              price: 0.00,
+              icon: Icons.two_wheeler,
+              isCanceled: true,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHistoryCard({
+    required String id,
+    required String date,
+    required String status,
+    required Color statusColor,
+    required Color statusTextColor,
+    required String origin,
+    required String destination,
+    required String vehicle,
+    required String plate,
+    required String driver,
+    required double price,
+    required IconData icon,
+    bool isCanceled = false,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    id,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    date,
+                    style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                  ),
+                ],
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  status,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: statusTextColor,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 12,
+                height: 12,
+                margin: EdgeInsets.only(top: 4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isCanceled ? Colors.grey[300] : Colors.orange[400],
+                ),
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Origem', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                    Text(
+                      origin,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: isCanceled ? Colors.grey[500] : Colors.black,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 12,
+                height: 12,
+                margin: EdgeInsets.only(top: 4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isCanceled ? Colors.grey[300]! : Colors.orange[400]!,
+                    width: 2,
+                  ),
+                ),
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Destino', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                    Text(
+                      destination,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: isCanceled ? Colors.grey[500] : Colors.black,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12),
+          Divider(),
+          SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(icon, size: 16, color: isCanceled ? Colors.grey[400] : Colors.grey[500]),
+              SizedBox(width: 8),
+              Text(
+                vehicle,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: isCanceled ? Colors.grey[400] : Colors.grey[700],
+                ),
+              ),
+              SizedBox(width: 8),
+              Text(
+                '• $plate',
+                style: TextStyle(fontSize: 12, color: isCanceled ? Colors.grey[400] : Colors.grey[500]),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(Icons.person, size: 16, color: isCanceled ? Colors.grey[400] : Colors.grey[500]),
+              SizedBox(width: 8),
+              Text(
+                driver,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isCanceled ? Colors.grey[400] : Colors.grey[700],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12),
+          Divider(),
+          SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                isCanceled ? 'Corrida cancelada' : 'Valor da corrida',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isCanceled ? Colors.grey[500] : Colors.grey[600],
+                ),
+              ),
+              Text(
+                isCanceled ? 'R\$ 0,00' : 'R\$ ${price.toStringAsFixed(2)}',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isCanceled ? Colors.grey[400] : Colors.green[600],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWalletScreen() {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.chevron_left),
+          onPressed: () {
+            setState(() {
+              _showWallet = false;
+            });
+          },
+        ),
+        title: Text('Minha Carteira'),
+        backgroundColor: Colors.orange[400],
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Colors.orange[400]!, Colors.orange[500]!],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 10,
+                      offset: Offset(0, 5),
+                    ),
+                  ],
+                ),
+                padding: EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Saldo disponível',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white.withOpacity(0.9),
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'R\$ 125,00',
+                      style: TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text('💳 Crédito', style: TextStyle(color: Colors.white)),
+                        ),
+                        SizedBox(width: 8),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text('📱 PIX', style: TextStyle(color: Colors.white)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 24),
+              Text(
+                'Adicionar saldo',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              SizedBox(height: 12),
+              _buildWalletOption(
+                title: 'PIX',
+                subtitle: 'Transferência instantânea',
+                icon: Icons.pix,
+                color: Colors.blue[100]!,
+                iconColor: Colors.blue[600]!,
+                onTap: () {
+                  setState(() {
+                    _showPixDeposit = true;
+                  });
+                },
+              ),
+              SizedBox(height: 12),
+              _buildWalletOption(
+                title: 'Cartão de Crédito',
+                subtitle: 'Visa, Master, Elo',
+                icon: Icons.credit_card,
+                color: Colors.purple[100]!,
+                iconColor: Colors.purple[600]!,
+                onTap: () {
+                  setState(() {
+                    _cardType = 'credit';
+                    _showCardForm = true;
+                  });
+                },
+              ),
+              SizedBox(height: 12),
+              _buildWalletOption(
+                title: 'Cartão de Débito',
+                subtitle: 'Débito direto',
+                icon: Icons.credit_card,
+                color: Colors.green[100]!,
+                iconColor: Colors.green[600]!,
+                onTap: () {
+                  setState(() {
+                    _cardType = 'debit';
+                    _showCardForm = true;
+                  });
+                },
+              ),
+              SizedBox(height: 24),
+              Text(
+                'Histórico de transações',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              SizedBox(height: 12),
+              _buildTransactionItem(
+                title: 'Recarga PIX',
+                date: '10/01/2026',
+                amount: 100.00,
+                isPositive: true,
+              ),
+              SizedBox(height: 8),
+              _buildTransactionItem(
+                title: 'Entrega #1234',
+                date: '14/01/2026',
+                amount: 15.00,
+                isPositive: false,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWalletOption({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required Color iconColor,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        padding: EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: iconColor, size: 24),
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTransactionItem({
+    required String title,
+    required String date,
+    required double amount,
+    required bool isPositive,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.all(16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+              Text(
+                date,
+                style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+              ),
+            ],
+          ),
+          Text(
+            '${isPositive ? '+' : '-'} R\$ ${amount.toStringAsFixed(2)}',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: isPositive ? Colors.green[600] : Colors.red[600],
+            ),
+          ),
+        ],
       ),
     );
   }
 }
-  // =============== MAIN SCREEN ===============
-  class MainScreen extends StatefulWidget {
-    final String userPhone;
-    final VoidCallback onLogout
-
-    const MainScreen({
-      super.key,
-      required this.userPhone,
-      required this.onLogout,
-    });
-
-    @override
-    State<MainScreen> createState() => _MainScreenState();
-  }
-
-  class _MainScreenState extends State<MainScreen> {
-    with SingleTickerProviderStateMixin {
-      late TabController _tabController;
-      int _selectedIndex = 0;
-      bool _showDestinationForm = false;
-      String _selectedVehicle = '';
-      String _destinationAddress = '';
-
-      final List<Map<String, dynamic>> _recentAddress = [
-        {
-      'address': 'Rua Victor. P Correia, 184 - apto 1',
-      'name': 'Veronica',
-      'phone': '47996674426',
-      'type': 'home',
-    },
-    {
-      'address': 'Posto Portal Camboriú, Avenida Santa Catarina',
-      'name': 'Trabalho',
-      'phone': '',
-      'type': 'work',
-    },
-    {
-      'address': 'Rua Tereza Evangelista Gonçalves, 273',
-      'name': 'Favorito',
-      'phone': '',
-      'type': 'favorite',
-    },
-  ];
-    
-     @override
-     void initState() {
-      super.initState();
-      _tabController = TabController(length: 2, vsync: this);
-     }
-
-     @override
-     void dispose() {
-      _tabController.dispose();
-      super.dispose();
-     }
-
-     void _selectAddress(Map<String, dynamic> address) {
-      setState(() {
-        _destinationAddress = address['address'];
-        _showDestinationForm = false;
-      })
-     }
-
-     @override
-     Widget build(BuildContext context) {
-      if (_showDestinationForm) {
-        return _buildDestinationScreen();
-      }
-
-      return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.menu, color: Color(0xFF111827)),
-            onPressed: () {},
-          ),
-          actions: [
-            IconButton(
-              Icon: const Icon(Icons.person_outline, color: Color(0zFF111827)),
-              onPressed: () {},
-            ),
-          ],
-        ),
-        body: Column(
-          children: [
-            //Header personalizado
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Olá, Gabriele!',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  const Text(
-                    'VOCÊ PRECISA,',
-                    style: TextStyle(
-                      fontSize:20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF111827),
-                    ),
-                  ),
-                  const Text(
-                    'NG Entrega',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF111827),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-              ),
-            ),
-
-            // Tabs
-            Container(
-              color: Colors.white,
-              child: TabBar(
-                controller: _tabController,
-                indicatorColor: const Color(0xFFF97316),
-                labelColor: const Color(0xFFF97316),
-                unselectedLabelColor: Color(0xFF6B7280),
-                tabs: const [
-                  Tab(text: 'Enviar'),
-                  Tab(text: 'Receber'),
-                ],
-              ),
-            ),
-
-            // Conteúdo
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  // Tab Enviar
-                  SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      children: [
-                        // Remetente
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.1),
-                                blurRadius: 10,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAligment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Enviar de',
-                                    style: TextStyle(
-                                      color: Colors.grey.shade600,
-                                    ),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {},
-                                    child: const Text(
-                                      'Alterar',
-                                      style: TextStyle(
-                                        color: Color(0xFFF97316),
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.location_on,
-                                    color: Color(0xFFF97316),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'Rua Olga Bernardes Amorim, 101',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        Text(
-                                          'Gabriele - (47) 99641-2384',
-                                          style: TextStyle(
-                                            color: Colors.grey.shade600,
-                                          ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // Destinatário
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _showDestinationForm = true;
-                          });
-                        },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.1),
-                                blurRadius: 10,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 24,
-                                height: 24,
-                                decoration: const BoxDecoration(
-                                  color: Colors.grey.shade100,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Icon(
-                                  Icon.circle,
-                                  color: Color(0xFFF97316),
-                                  size: 12,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Entregar para',
-                                      style: TextStyle(
-                                        color: Colors.grey.shade600,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                    Text(
-                                      _destinationAddress.isNotEmpty
-                                      ? _destinationAddress
-                                      : 'Selecionar endereço de entrega',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        color: _destinationAddress.isNotEmpty
-                                        ? Color.black
-                                        : Colors.grey,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const Icon(
-                                Icons.chevron_right,
-                                color: Colors.grey,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      if (_destinationAddress.isNotEmpty) ...[
-                        const SizedBox(height: 16),
-
-                        // Detalhes da entrega
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.1),
-                                blurRadius: 10,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            children: [
-                              // Endereços
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Icon(
-                                    Icons.location_on,
-                                    color: Color(0xFFF97316),
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'Rua Olga Bernardes Amorim, 101',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        Text(
-                                          'Gabriele - (47) 99641-2384',
-                                          style: TextStyle(
-                                            color: Colors.grey.shade600,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-
-                              // Linha divisória
-                              Container(
-                                height: 20,
-                                width: 1,
-                                margin: const EdgeInsets.only(left: 9),
-                                color: Colors.grey.shade300,
-                              ),
-
-                              const SizedBox(height: 16),
-
-                              // Destino
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Icon(
-                                    Icons.location_on,
-                                    color: Color(0xFF10B981),
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Destinatário',
-                                          style: TextStyle(
-                                            color: Colors.grey.shade600,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-
-                              const SizedBox(height: 24),
-
-                              // Botão detalhes do item
-
-                            ],
-                          ),
-                        ),
-                      ]
