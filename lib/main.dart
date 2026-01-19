@@ -6,6 +6,8 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -24,11 +26,14 @@ class MyApp extends StatelessWidget {
 }
 
 class DeliveryApp extends StatefulWidget {
+  const DeliveryApp({super.key});
+
   @override
   _DeliveryAppState createState() => _DeliveryAppState();
 }
 
-class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStateMixin {
+class _DeliveryAppState extends State<DeliveryApp>
+    with SingleTickerProviderStateMixin {
   String _currentScreen = 'splash';
   bool _isLogin = true;
   String _activeTab = 'enviar';
@@ -53,7 +58,7 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
 
   // Variáveis para o método de pagamento
   String _selectedPaymentMethod = 'cash'; // 'cash', 'card', 'pix', 'wallet'
-  
+
   // Mapeamentos corretos com tipos apropriados
   final Map<String, String> _paymentMethodDisplay = {
     'cash': 'Dinheiro',
@@ -83,7 +88,7 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
     'wallet': 'Saldo: R\$125,00',
   };
 
-  Map<String, String> _authData = {
+  final Map<String, String> _authData = {
     'name': '',
     'email': '',
     'phone': '',
@@ -137,7 +142,8 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
   }
 
   void _copyPixCode() async {
-    const pixCode = '00020126580014br.gov.bcb.pix0136a1b2c3d4-e5f6-7890-abcd-ef1234567890520400005303986540525NG EXPRESS LTDA6009SAO PAULO62070503***63041D3D';
+    const pixCode =
+        '00020126580014br.gov.bcb.pix0136a1b2c3d4-e5f6-7890-abcd-ef1234567890520400005303986540525NG EXPRESS LTDA6009SAO PAULO62070503***63041D3D';
     await Clipboard.setData(ClipboardData(text: pixCode));
     setState(() {
       _pixCopied = true;
@@ -220,7 +226,11 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Colors.orange[400]!, Colors.orange[500]!, Colors.deepOrange[400]!],
+            colors: [
+              Colors.orange[400]!,
+              Colors.orange[500]!,
+              Colors.deepOrange[400]!,
+            ],
           ),
         ),
         child: SafeArea(
@@ -296,10 +306,7 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                   ),
                   child: Text(
                     'Começar',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -364,8 +371,12 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                               });
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: _isLogin ? Colors.orange[400] : Colors.white,
-                              foregroundColor: _isLogin ? Colors.white : Colors.grey[600],
+                              backgroundColor: _isLogin
+                                  ? Colors.orange[400]
+                                  : Colors.white,
+                              foregroundColor: _isLogin
+                                  ? Colors.white
+                                  : Colors.grey[600],
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -386,8 +397,12 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                               });
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: !_isLogin ? Colors.orange[400] : Colors.white,
-                              foregroundColor: !_isLogin ? Colors.white : Colors.grey[600],
+                              backgroundColor: !_isLogin
+                                  ? Colors.orange[400]
+                                  : Colors.white,
+                              foregroundColor: !_isLogin
+                                  ? Colors.white
+                                  : Colors.grey[600],
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -405,7 +420,10 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                     if (!_isLogin) ...[
                       TextField(
                         decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.person, color: Colors.grey[400]),
+                          prefixIcon: Icon(
+                            Icons.person,
+                            color: Colors.grey[400],
+                          ),
                           hintText: 'Nome completo',
                           filled: true,
                           fillColor: Colors.white,
@@ -415,7 +433,10 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                            borderSide: BorderSide(
+                              color: Colors.orange[400]!,
+                              width: 2,
+                            ),
                           ),
                           contentPadding: EdgeInsets.symmetric(
                             vertical: 16,
@@ -440,9 +461,12 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide(color: Colors.grey[200]!),
                         ),
-                          focusedBorder: OutlineInputBorder(
+                        focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                          borderSide: BorderSide(
+                            color: Colors.orange[400]!,
+                            width: 2,
+                          ),
                         ),
                         contentPadding: EdgeInsets.symmetric(
                           vertical: 16,
@@ -468,7 +492,10 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                          borderSide: BorderSide(
+                            color: Colors.orange[400]!,
+                            width: 2,
+                          ),
                         ),
                         contentPadding: EdgeInsets.symmetric(
                           vertical: 16,
@@ -496,7 +523,10 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                          borderSide: BorderSide(
+                            color: Colors.orange[400]!,
+                            width: 2,
+                          ),
                         ),
                         contentPadding: EdgeInsets.symmetric(
                           vertical: 16,
@@ -528,7 +558,10 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                         ),
                         child: Text(
                           _isLogin ? 'Entrar' : 'Criar conta',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
@@ -538,7 +571,10 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                         Expanded(child: Divider(color: Colors.grey[300])),
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 16),
-                          child: Text('ou', style: TextStyle(color: Colors.grey[500])),
+                          child: Text(
+                            'ou',
+                            style: TextStyle(color: Colors.grey[500]),
+                          ),
                         ),
                         Expanded(child: Divider(color: Colors.grey[300])),
                       ],
@@ -601,10 +637,7 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
             children: [
               Text(
                 'Escolha o tipo de veículo para sua entrega',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 18, color: Colors.grey[600]),
               ),
               SizedBox(height: 32),
               Expanded(
@@ -622,10 +655,14 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                         margin: EdgeInsets.only(bottom: 20),
                         padding: EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: _selectedVehicle == 'moto' ? Colors.orange[50] : Colors.white,
+                          color: _selectedVehicle == 'moto'
+                              ? Colors.orange[50]
+                              : Colors.white,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: _selectedVehicle == 'moto' ? Colors.orange[400]! : Colors.grey[200]!,
+                            color: _selectedVehicle == 'moto'
+                                ? Colors.orange[400]!
+                                : Colors.grey[200]!,
                             width: _selectedVehicle == 'moto' ? 3 : 1,
                           ),
                           boxShadow: [
@@ -641,7 +678,9 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                             Icon(
                               Icons.two_wheeler,
                               size: 80,
-                              color: _selectedVehicle == 'moto' ? Colors.orange[600] : Colors.grey[400],
+                              color: _selectedVehicle == 'moto'
+                                  ? Colors.orange[600]
+                                  : Colors.grey[400],
                             ),
                             SizedBox(height: 16),
                             Text(
@@ -649,7 +688,9 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
-                                color: _selectedVehicle == 'moto' ? Colors.orange[600] : Colors.grey[700],
+                                color: _selectedVehicle == 'moto'
+                                    ? Colors.orange[600]
+                                    : Colors.grey[700],
                               ),
                             ),
                             SizedBox(height: 8),
@@ -675,7 +716,11 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                                   ),
                                 ),
                                 SizedBox(width: 16),
-                                Icon(Icons.money_off, color: Colors.green, size: 16),
+                                Icon(
+                                  Icons.money_off,
+                                  color: Colors.green,
+                                  size: 16,
+                                ),
                                 SizedBox(width: 4),
                                 Text(
                                   'Mais econômico',
@@ -701,10 +746,14 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                         duration: Duration(milliseconds: 300),
                         padding: EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: _selectedVehicle == 'carro' ? Colors.orange[50] : Colors.white,
+                          color: _selectedVehicle == 'carro'
+                              ? Colors.orange[50]
+                              : Colors.white,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: _selectedVehicle == 'carro' ? Colors.orange[400]! : Colors.grey[200]!,
+                            color: _selectedVehicle == 'carro'
+                                ? Colors.orange[400]!
+                                : Colors.grey[200]!,
                             width: _selectedVehicle == 'carro' ? 3 : 1,
                           ),
                           boxShadow: [
@@ -720,7 +769,9 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                             Icon(
                               Icons.directions_car,
                               size: 80,
-                              color: _selectedVehicle == 'carro' ? Colors.orange[600] : Colors.grey[400],
+                              color: _selectedVehicle == 'carro'
+                                  ? Colors.orange[600]
+                                  : Colors.grey[400],
                             ),
                             SizedBox(height: 16),
                             Text(
@@ -728,7 +779,9 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
-                                color: _selectedVehicle == 'carro' ? Colors.orange[600] : Colors.grey[700],
+                                color: _selectedVehicle == 'carro'
+                                    ? Colors.orange[600]
+                                    : Colors.grey[700],
                               ),
                             ),
                             SizedBox(height: 8),
@@ -744,7 +797,11 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.inventory, color: Colors.blue, size: 16),
+                                Icon(
+                                  Icons.inventory,
+                                  color: Colors.blue,
+                                  size: 16,
+                                ),
                                 SizedBox(width: 4),
                                 Text(
                                   'Mais espaço',
@@ -754,7 +811,11 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                                   ),
                                 ),
                                 SizedBox(width: 16),
-                                Icon(Icons.security, color: Colors.purple, size: 16),
+                                Icon(
+                                  Icons.security,
+                                  color: Colors.purple,
+                                  size: 16,
+                                ),
                                 SizedBox(width: 4),
                                 Text(
                                   'Mais seguro',
@@ -785,7 +846,9 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        _selectedVehicle == 'moto' ? Icons.two_wheeler : Icons.directions_car,
+                        _selectedVehicle == 'moto'
+                            ? Icons.two_wheeler
+                            : Icons.directions_car,
                         color: Colors.orange[600],
                       ),
                       SizedBox(width: 8),
@@ -853,24 +916,25 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                     SizedBox(height: 4),
                     Text(
                       'Gabriele · 47996412384',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                   ],
                 ),
               ),
-              
+
               SizedBox(height: 8),
-              
+
               // Seta para baixo
               Center(
-                child: Icon(Icons.arrow_downward, color: Colors.orange[400], size: 24),
+                child: Icon(
+                  Icons.arrow_downward,
+                  color: Colors.orange[400],
+                  size: 24,
+                ),
               ),
-              
+
               SizedBox(height: 8),
-              
+
               // Endereço de destino
               Container(
                 padding: EdgeInsets.all(16),
@@ -898,27 +962,21 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                     SizedBox(height: 4),
                     Text(
                       'Veronica · 47996674426',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                   ],
                 ),
               ),
-              
+
               SizedBox(height: 24),
-              
+
               // Título dos detalhes do item
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     'Inserir detalhes do item',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   GestureDetector(
                     onTap: () {
@@ -931,9 +989,7 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                       children: [
                         Text(
                           'Adicionar',
-                          style: TextStyle(
-                            color: Colors.orange[400],
-                          ),
+                          style: TextStyle(color: Colors.orange[400]),
                         ),
                         Icon(Icons.add, color: Colors.orange[400], size: 16),
                       ],
@@ -941,23 +997,20 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                   ),
                 ],
               ),
-              
+
               SizedBox(height: 4),
-              
+
               Text(
                 'Adicionar uma observação na entrega',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
-              
+
               SizedBox(height: 16),
-              
+
               Divider(),
-              
+
               SizedBox(height: 16),
-              
+
               // Opção Entrega Moto
               GestureDetector(
                 onTap: () {
@@ -972,8 +1025,8 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: _selectedVehicle == 'moto' 
-                          ? Colors.orange[400]! 
+                      color: _selectedVehicle == 'moto'
+                          ? Colors.orange[400]!
                           : Colors.grey[200]!,
                       width: _selectedVehicle == 'moto' ? 2 : 1,
                     ),
@@ -993,7 +1046,11 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.two_wheeler, color: Colors.orange[600], size: 24),
+                              Icon(
+                                Icons.two_wheeler,
+                                color: Colors.orange[600],
+                                size: 24,
+                              ),
                               SizedBox(width: 12),
                               Text(
                                 'Entrega Moto',
@@ -1017,7 +1074,11 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                       SizedBox(height: 8),
                       Row(
                         children: [
-                          Icon(Icons.access_time, size: 16, color: Colors.grey[500]),
+                          Icon(
+                            Icons.access_time,
+                            size: 16,
+                            color: Colors.grey[500],
+                          ),
                           SizedBox(width: 4),
                           Text(
                             '21:37 · 8 min',
@@ -1027,7 +1088,11 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                             ),
                           ),
                           SizedBox(width: 16),
-                          Icon(Icons.straighten, size: 16, color: Colors.grey[500]),
+                          Icon(
+                            Icons.straighten,
+                            size: 16,
+                            color: Colors.grey[500],
+                          ),
                           SizedBox(width: 4),
                           Text(
                             '40×34×36cm · 10kg',
@@ -1042,7 +1107,7 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                   ),
                 ),
               ),
-              
+
               // Opção Entrega Carro
               GestureDetector(
                 onTap: () {
@@ -1056,8 +1121,8 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: _selectedVehicle == 'carro' 
-                          ? Colors.orange[400]! 
+                      color: _selectedVehicle == 'carro'
+                          ? Colors.orange[400]!
                           : Colors.grey[200]!,
                       width: _selectedVehicle == 'carro' ? 2 : 1,
                     ),
@@ -1077,7 +1142,11 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.directions_car, color: Colors.orange[600], size: 24),
+                              Icon(
+                                Icons.directions_car,
+                                color: Colors.orange[600],
+                                size: 24,
+                              ),
                               SizedBox(width: 12),
                               Text(
                                 'Entrega Carro',
@@ -1101,7 +1170,11 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                       SizedBox(height: 8),
                       Row(
                         children: [
-                          Icon(Icons.access_time, size: 16, color: Colors.grey[500]),
+                          Icon(
+                            Icons.access_time,
+                            size: 16,
+                            color: Colors.grey[500],
+                          ),
                           SizedBox(width: 4),
                           Text(
                             '21:35 · 5 min',
@@ -1111,7 +1184,11 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                             ),
                           ),
                           SizedBox(width: 16),
-                          Icon(Icons.straighten, size: 16, color: Colors.grey[500]),
+                          Icon(
+                            Icons.straighten,
+                            size: 16,
+                            color: Colors.grey[500],
+                          ),
                           SizedBox(width: 4),
                           Text(
                             '100×70×60cm · 30kg',
@@ -1126,9 +1203,9 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                   ),
                 ),
               ),
-              
+
               SizedBox(height: 24),
-              
+
               // Seção Verificar com PIN
               Container(
                 padding: EdgeInsets.all(16),
@@ -1149,7 +1226,11 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                     SizedBox(height: 8),
                     Row(
                       children: [
-                        Icon(Icons.check_box_outline_blank, size: 20, color: Colors.grey[500]),
+                        Icon(
+                          Icons.check_box_outline_blank,
+                          size: 20,
+                          color: Colors.grey[500],
+                        ),
                         SizedBox(width: 8),
                         Text(
                           'Usar código de coleta',
@@ -1163,7 +1244,11 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                     SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(Icons.check_box_outline_blank, size: 20, color: Colors.grey[500]),
+                        Icon(
+                          Icons.check_box_outline_blank,
+                          size: 20,
+                          color: Colors.grey[500],
+                        ),
                         SizedBox(width: 8),
                         Text(
                           'Usar código de entrega',
@@ -1177,9 +1262,9 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                   ],
                 ),
               ),
-              
+
               SizedBox(height: 16),
-              
+
               // Termos de uso
               Text(
                 'Ao solicitar uma entrega, você concorda com os Termos de Uso',
@@ -1190,13 +1275,13 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                 ),
                 textAlign: TextAlign.center,
               ),
-              
+
               SizedBox(height: 24),
-              
+
               Divider(),
-              
+
               SizedBox(height: 16),
-              
+
               // Seção de pagamento - COMO NA IMAGEM
               Container(
                 padding: EdgeInsets.all(16),
@@ -1225,7 +1310,8 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                             children: [
                               Icon(
                                 _paymentMethodIcons[_selectedPaymentMethod]!,
-                                color: _paymentMethodColors[_selectedPaymentMethod]!,
+                                color:
+                                    _paymentMethodColors[_selectedPaymentMethod]!,
                               ),
                               SizedBox(width: 12),
                               Text(
@@ -1247,20 +1333,23 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                                 ),
                               ),
                               SizedBox(width: 8),
-                              Icon(Icons.chevron_right, color: Colors.grey[500]),
+                              Icon(
+                                Icons.chevron_right,
+                                color: Colors.grey[500],
+                              ),
                             ],
                           ),
                         ],
                       ),
                     ),
-                    
+
                     SizedBox(height: 16),
-                    
+
                     // Linha do total a pagar
                     Divider(),
-                    
+
                     SizedBox(height: 16),
-                    
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -1284,9 +1373,9 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                   ],
                 ),
               ),
-              
+
               SizedBox(height: 32),
-              
+
               // Botão de solicitar entrega
               ElevatedButton(
                 onPressed: () {
@@ -1347,20 +1436,17 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              
+
               Padding(
                 padding: EdgeInsets.all(20),
                 child: Text(
                   'Selecionar método de pagamento',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
-              
+
               Divider(),
-              
+
               // Opção Dinheiro
               _buildPaymentMethodOption(
                 title: 'Dinheiro',
@@ -1369,7 +1455,7 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                 iconColor: Colors.green[600]!,
                 methodKey: 'cash',
               ),
-              
+
               // Opção Carteira Digital
               _buildPaymentMethodOption(
                 title: 'Carteira Digital',
@@ -1378,7 +1464,7 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                 iconColor: Colors.orange[600]!,
                 methodKey: 'wallet',
               ),
-              
+
               // Opção PIX
               _buildPaymentMethodOption(
                 title: 'PIX',
@@ -1387,7 +1473,7 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                 iconColor: Colors.blue[600]!,
                 methodKey: 'pix',
               ),
-              
+
               // Opção Cartão
               _buildPaymentMethodOption(
                 title: 'Cartão',
@@ -1396,9 +1482,9 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                 iconColor: Colors.purple[600]!,
                 methodKey: 'card',
               ),
-              
+
               SizedBox(height: 20),
-              
+
               // Botão de cancelar
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -1414,13 +1500,10 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                     ),
                     padding: EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: Text(
-                    'Cancelar',
-                    style: TextStyle(fontSize: 16),
-                  ),
+                  child: Text('Cancelar', style: TextStyle(fontSize: 16)),
                 ),
               ),
-              
+
               SizedBox(height: 10),
             ],
           ),
@@ -1446,14 +1529,11 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
       child: Container(
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: _selectedPaymentMethod == methodKey ? Colors.orange[50] : Colors.white,
+          color: _selectedPaymentMethod == methodKey
+              ? Colors.orange[50]
+              : Colors.white,
           border: _selectedPaymentMethod == methodKey
-              ? Border(
-                  left: BorderSide(
-                    color: Colors.orange[400]!,
-                    width: 3,
-                  ),
-                )
+              ? Border(left: BorderSide(color: Colors.orange[400]!, width: 3))
               : null,
         ),
         child: Row(
@@ -1465,9 +1545,7 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                 color: iconColor.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Center(
-                child: Icon(icon, color: iconColor, size: 24),
-              ),
+              child: Center(child: Icon(icon, color: iconColor, size: 24)),
             ),
             SizedBox(width: 16),
             Expanded(
@@ -1479,25 +1557,21 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: _selectedPaymentMethod == methodKey ? Colors.orange[600] : Colors.black,
+                      color: _selectedPaymentMethod == methodKey
+                          ? Colors.orange[600]
+                          : Colors.black,
                     ),
                   ),
                   SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                   ),
                 ],
               ),
             ),
             if (_selectedPaymentMethod == methodKey)
-              Icon(
-                Icons.check_circle,
-                color: Colors.orange[400],
-              ),
+              Icon(Icons.check_circle, color: Colors.orange[400]),
           ],
         ),
       ),
@@ -1583,7 +1657,11 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 padding: EdgeInsets.all(8),
-                                child: Icon(Icons.chevron_right, size: 24, color: Colors.black),
+                                child: Icon(
+                                  Icons.chevron_right,
+                                  size: 24,
+                                  color: Colors.black,
+                                ),
                               ),
                               SizedBox(width: 8),
                               Text(
@@ -1604,7 +1682,7 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                       child: Column(
                         children: [
                           // BOTÕES DE SELEÇÃO ENVIAR/RECEBER
-                          Container(
+                          SizedBox(
                             width: double.infinity,
                             child: Row(
                               children: [
@@ -1612,7 +1690,9 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                                   child: TextButton(
                                     onPressed: () => _switchTabs('enviar'),
                                     style: TextButton.styleFrom(
-                                      padding: EdgeInsets.symmetric(vertical: 20),
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: 20,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.zero,
                                       ),
@@ -1624,7 +1704,9 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                                           style: TextStyle(
                                             fontSize: 18,
                                             fontWeight: FontWeight.w600,
-                                            color: _activeTab == 'enviar' ? Colors.black : Colors.grey[400],
+                                            color: _activeTab == 'enviar'
+                                                ? Colors.black
+                                                : Colors.grey[400],
                                           ),
                                         ),
                                         SizedBox(height: 4),
@@ -1647,7 +1729,9 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                                   child: TextButton(
                                     onPressed: () => _switchTabs('receber'),
                                     style: TextButton.styleFrom(
-                                      padding: EdgeInsets.symmetric(vertical: 20),
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: 20,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.zero,
                                       ),
@@ -1659,7 +1743,9 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                                           style: TextStyle(
                                             fontSize: 18,
                                             fontWeight: FontWeight.w600,
-                                            color: _activeTab == 'receber' ? Colors.black : Colors.grey[400],
+                                            color: _activeTab == 'receber'
+                                                ? Colors.black
+                                                : Colors.grey[400],
                                           ),
                                         ),
                                         SizedBox(height: 4),
@@ -1681,22 +1767,23 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                               ],
                             ),
                           ),
-                          
+
                           // ÁREA DOS INPUTS COM ANIMAÇÃO VERTICAL SIMPLIFICADA
                           AnimatedSwitcher(
                             duration: Duration(milliseconds: 300),
-                            transitionBuilder: (Widget child, Animation<double> animation) {
-                              return SlideTransition(
-                                position: Tween<Offset>(
-                                  begin: Offset(0.0, 0.5),
-                                  end: Offset.zero,
-                                ).animate(animation),
-                                child: FadeTransition(
-                                  opacity: animation,
-                                  child: child,
-                                ),
-                              );
-                            },
+                            transitionBuilder:
+                                (Widget child, Animation<double> animation) {
+                                  return SlideTransition(
+                                    position: Tween<Offset>(
+                                      begin: Offset(0.0, 0.5),
+                                      end: Offset.zero,
+                                    ).animate(animation),
+                                    child: FadeTransition(
+                                      opacity: animation,
+                                      child: child,
+                                    ),
+                                  );
+                                },
                             child: _activeTab == 'enviar'
                                 ? _buildSendContent()
                                 : _buildReceiveContent(),
@@ -1733,10 +1820,7 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                   SizedBox(height: 4),
                   Text(
                     'Histórico',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[400],
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[400]),
                   ),
                 ],
               ),
@@ -1746,8 +1830,8 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
               child: FloatingActionButton(
                 onPressed: () {},
                 backgroundColor: Colors.orange[400],
-                child: Icon(Icons.search, size: 28),
                 elevation: 4,
+                child: Icon(Icons.search, size: 28),
               ),
             ),
             GestureDetector(
@@ -1763,10 +1847,7 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                   SizedBox(height: 4),
                   Text(
                     'Carteira',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[400],
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[400]),
                   ),
                 ],
               ),
@@ -1837,7 +1918,11 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                       ],
                     ),
                   ),
-                  Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: Colors.grey[400],
+                  ),
                 ],
               ),
             ),
@@ -1870,10 +1955,7 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                     height: 12,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.orange[400]!,
-                        width: 2,
-                      ),
+                      border: Border.all(color: Colors.orange[400]!, width: 2),
                     ),
                   ),
                   SizedBox(width: 16),
@@ -1886,7 +1968,11 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                       ),
                     ),
                   ),
-                  Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: Colors.grey[400],
+                  ),
                 ],
               ),
             ),
@@ -1901,7 +1987,9 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                   }
                 : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: _deliveryAddressSet ? Colors.orange[400] : Colors.grey[400],
+              backgroundColor: _deliveryAddressSet
+                  ? Colors.orange[400]
+                  : Colors.grey[400],
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
@@ -1910,7 +1998,9 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
               minimumSize: Size(double.infinity, 0),
             ),
             child: Text(
-              _deliveryAddressSet ? 'Continuar' : 'Selecione o endereço de entrega',
+              _deliveryAddressSet
+                  ? 'Continuar'
+                  : 'Selecione o endereço de entrega',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
           ),
@@ -1966,7 +2056,11 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                       ),
                     ),
                   ),
-                  Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: Colors.grey[400],
+                  ),
                 ],
               ),
             ),
@@ -1999,10 +2093,7 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                     height: 12,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.orange[400]!,
-                        width: 2,
-                      ),
+                      border: Border.all(color: Colors.orange[400]!, width: 2),
                     ),
                   ),
                   SizedBox(width: 16),
@@ -2028,7 +2119,11 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                       ],
                     ),
                   ),
-                  Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: Colors.grey[400],
+                  ),
                 ],
               ),
             ),
@@ -2043,7 +2138,9 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                   }
                 : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: _deliveryAddressSet ? Colors.orange[400] : Colors.grey[400],
+              backgroundColor: _deliveryAddressSet
+                  ? Colors.orange[400]
+                  : Colors.grey[400],
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
@@ -2052,7 +2149,9 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
               minimumSize: Size(double.infinity, 0),
             ),
             child: Text(
-              _deliveryAddressSet ? 'Continuar' : 'Selecione o endereço de entrega',
+              _deliveryAddressSet
+                  ? 'Continuar'
+                  : 'Selecione o endereço de entrega',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
           ),
@@ -2083,18 +2182,12 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
             children: [
               Text(
                 'Detalhes do item',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 20),
               Text(
                 'Tipo de item',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               SizedBox(height: 12),
               Wrap(
@@ -2105,7 +2198,13 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                     label: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(_itemIcons[item]!, size: 16, color: _selectedItemType == item ? Colors.white : Colors.grey[600]),
+                        Icon(
+                          _itemIcons[item]!,
+                          size: 16,
+                          color: _selectedItemType == item
+                              ? Colors.white
+                              : Colors.grey[600],
+                        ),
                         SizedBox(width: 4),
                         Text(item),
                       ],
@@ -2118,7 +2217,9 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                     },
                     selectedColor: Colors.orange[400],
                     labelStyle: TextStyle(
-                      color: _selectedItemType == item ? Colors.white : Colors.black,
+                      color: _selectedItemType == item
+                          ? Colors.white
+                          : Colors.black,
                     ),
                   );
                 }).toList(),
@@ -2128,10 +2229,7 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
               SizedBox(height: 24),
               Text(
                 'Valor do item',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               SizedBox(height: 12),
               TextField(
@@ -2143,7 +2241,10 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                    borderSide: BorderSide(
+                      color: Colors.orange[400]!,
+                      width: 2,
+                    ),
                   ),
                   contentPadding: EdgeInsets.symmetric(
                     vertical: 16,
@@ -2160,20 +2261,14 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
               SizedBox(height: 8),
               Text(
                 'A NG EXPRESS não sugere envio de itens com valor superior a R\$500',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[500],
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey[500]),
               ),
               SizedBox(height: 24),
               Divider(),
               SizedBox(height: 24),
               Text(
                 'Observações da entrega',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               SizedBox(height: 12),
               TextField(
@@ -2187,7 +2282,10 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                    borderSide: BorderSide(
+                      color: Colors.orange[400]!,
+                      width: 2,
+                    ),
                   ),
                   contentPadding: EdgeInsets.symmetric(
                     vertical: 16,
@@ -2205,10 +2303,7 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                 alignment: Alignment.centerRight,
                 child: Text(
                   '${_deliveryNotes.length}/100',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[500],
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                 ),
               ),
               SizedBox(height: 32),
@@ -2293,7 +2388,10 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                    borderSide: BorderSide(
+                      color: Colors.orange[400]!,
+                      width: 2,
+                    ),
                   ),
                   contentPadding: EdgeInsets.symmetric(
                     vertical: 16,
@@ -2315,7 +2413,10 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                    borderSide: BorderSide(
+                      color: Colors.orange[400]!,
+                      width: 2,
+                    ),
                   ),
                   contentPadding: EdgeInsets.symmetric(
                     vertical: 16,
@@ -2332,11 +2433,7 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                     padding: EdgeInsets.only(right: 8),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('🇧🇷'),
-                        SizedBox(width: 4),
-                        Text('+55'),
-                      ],
+                      children: [Text('🇧🇷'), SizedBox(width: 4), Text('+55')],
                     ),
                   ),
                   filled: true,
@@ -2347,7 +2444,10 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                    borderSide: BorderSide(
+                      color: Colors.orange[400]!,
+                      width: 2,
+                    ),
                   ),
                   contentPadding: EdgeInsets.symmetric(
                     vertical: 16,
@@ -2439,7 +2539,10 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                    borderSide: BorderSide(
+                      color: Colors.orange[400]!,
+                      width: 2,
+                    ),
                   ),
                   contentPadding: EdgeInsets.symmetric(
                     vertical: 16,
@@ -2461,7 +2564,10 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                    borderSide: BorderSide(
+                      color: Colors.orange[400]!,
+                      width: 2,
+                    ),
                   ),
                   contentPadding: EdgeInsets.symmetric(
                     vertical: 16,
@@ -2478,11 +2584,7 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                     padding: EdgeInsets.only(right: 8),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('🇧🇷'),
-                        SizedBox(width: 4),
-                        Text('+55'),
-                      ],
+                      children: [Text('🇧🇷'), SizedBox(width: 4), Text('+55')],
                     ),
                   ),
                   filled: true,
@@ -2493,7 +2595,10 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                    borderSide: BorderSide(
+                      color: Colors.orange[400]!,
+                      width: 2,
+                    ),
                   ),
                   contentPadding: EdgeInsets.symmetric(
                     vertical: 16,
@@ -2532,7 +2637,7 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
 
   Widget _buildPaymentScreen() {
     double ridePrice = _selectedVehicle == 'moto' ? 5.20 : 9.20;
-    
+
     // Sincroniza o método de pagamento
     _paymentMethod = _selectedPaymentMethod;
 
@@ -2572,18 +2677,25 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                   children: [
                     Text(
                       'Resumo da corrida',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     SizedBox(height: 16),
                     Row(
                       children: [
                         Icon(
-                          _selectedVehicle == 'moto' ? Icons.two_wheeler : Icons.directions_car,
+                          _selectedVehicle == 'moto'
+                              ? Icons.two_wheeler
+                              : Icons.directions_car,
                           color: Colors.grey[500],
                         ),
                         SizedBox(width: 12),
                         Text(
-                          _selectedVehicle == 'moto' ? 'Entrega de Moto' : 'Entrega de Carro',
+                          _selectedVehicle == 'moto'
+                              ? 'Entrega de Moto'
+                              : 'Entrega de Carro',
                           style: TextStyle(color: Colors.grey[700]),
                         ),
                       ],
@@ -2594,7 +2706,10 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Valor total', style: TextStyle(color: Colors.grey[600])),
+                        Text(
+                          'Valor total',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
                         Text(
                           'R\$ ${ridePrice.toStringAsFixed(2)}',
                           style: TextStyle(
@@ -2627,10 +2742,13 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                   children: [
                     Text(
                       'Forma de pagamento',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     SizedBox(height: 16),
-                    
+
                     // Mostra o método selecionado com destaque
                     Container(
                       padding: EdgeInsets.all(16),
@@ -2646,7 +2764,8 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                         children: [
                           Icon(
                             _paymentMethodIcons[_selectedPaymentMethod]!,
-                            color: _paymentMethodColors[_selectedPaymentMethod]!,
+                            color:
+                                _paymentMethodColors[_selectedPaymentMethod]!,
                           ),
                           SizedBox(width: 12),
                           Expanded(
@@ -2674,14 +2793,11 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                         ],
                       ),
                     ),
-                    
+
                     SizedBox(height: 16),
                     Text(
                       'Para alterar o método de pagamento, volte para a tela anterior.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[500],
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                     ),
                   ],
                 ),
@@ -2697,15 +2813,17 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                         content: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.check_circle, color: Colors.green, size: 60),
+                            Icon(
+                              Icons.check_circle,
+                              color: Colors.green,
+                              size: 60,
+                            ),
                             SizedBox(height: 16),
                             Text('Pagamento confirmado!'),
                             SizedBox(height: 8),
                             Text(
                               'Método: ${_paymentMethodDisplay[_selectedPaymentMethod]!}',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                             SizedBox(height: 8),
                             Text('Procurando motorista...'),
@@ -2769,7 +2887,9 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
           color: _paymentMethod == value ? Colors.orange[50] : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: _paymentMethod == value ? Colors.orange[400]! : Colors.grey[200]!,
+            color: _paymentMethod == value
+                ? Colors.orange[400]!
+                : Colors.grey[200]!,
             width: 2,
           ),
         ),
@@ -2781,7 +2901,9 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: _paymentMethod == value ? Colors.orange[400]! : Colors.grey[300]!,
+                  color: _paymentMethod == value
+                      ? Colors.orange[400]!
+                      : Colors.grey[300]!,
                   width: 2,
                 ),
               ),
@@ -2806,7 +2928,10 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title, style: TextStyle(fontWeight: FontWeight.w600)),
-                  Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                  ),
                 ],
               ),
             ),
@@ -2852,14 +2977,21 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                   children: [
                     Text(
                       'Escaneie o QR Code',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     SizedBox(height: 16),
                     Container(
                       width: 200,
                       height: 200,
                       color: Colors.grey[100],
-                      child: Icon(Icons.qr_code, size: 150, color: Colors.grey[800]),
+                      child: Icon(
+                        Icons.qr_code,
+                        size: 150,
+                        color: Colors.grey[800],
+                      ),
                     ),
                     SizedBox(height: 16),
                     Text(
@@ -2875,7 +3007,10 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                   Expanded(child: Divider(color: Colors.grey[300])),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: Text('ou', style: TextStyle(color: Colors.grey[500])),
+                    child: Text(
+                      'ou',
+                      style: TextStyle(color: Colors.grey[500]),
+                    ),
                   ),
                   Expanded(child: Divider(color: Colors.grey[300])),
                 ],
@@ -2899,7 +3034,10 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                   children: [
                     Text(
                       'PIX Copia e Cola',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     SizedBox(height: 16),
                     Container(
@@ -2926,7 +3064,9 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                         minimumSize: Size(double.infinity, 0),
                       ),
                       icon: _pixCopied ? Icon(Icons.check) : Icon(Icons.copy),
-                      label: Text(_pixCopied ? 'Copiado!' : 'Copiar código PIX'),
+                      label: Text(
+                        _pixCopied ? 'Copiado!' : 'Copiar código PIX',
+                      ),
                     ),
                   ],
                 ),
@@ -2971,7 +3111,9 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
             });
           },
         ),
-        title: Text(_cardType == 'credit' ? 'Cartão de Crédito' : 'Cartão de Débito'),
+        title: Text(
+          _cardType == 'credit' ? 'Cartão de Crédito' : 'Cartão de Débito',
+        ),
         backgroundColor: Colors.orange[400],
       ),
       body: SafeArea(
@@ -3075,7 +3217,10 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                    borderSide: BorderSide(
+                      color: Colors.orange[400]!,
+                      width: 2,
+                    ),
                   ),
                   contentPadding: EdgeInsets.symmetric(
                     vertical: 16,
@@ -3093,7 +3238,10 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                    borderSide: BorderSide(
+                      color: Colors.orange[400]!,
+                      width: 2,
+                    ),
                   ),
                   contentPadding: EdgeInsets.symmetric(
                     vertical: 16,
@@ -3114,7 +3262,10 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                          borderSide: BorderSide(
+                            color: Colors.orange[400]!,
+                            width: 2,
+                          ),
                         ),
                         contentPadding: EdgeInsets.symmetric(
                           vertical: 16,
@@ -3134,7 +3285,10 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.orange[400]!, width: 2),
+                          borderSide: BorderSide(
+                            color: Colors.orange[400]!,
+                            width: 2,
+                          ),
                         ),
                         contentPadding: EdgeInsets.symmetric(
                           vertical: 16,
@@ -3277,11 +3431,7 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
+          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
         ],
       ),
       padding: EdgeInsets.all(16),
@@ -3339,7 +3489,10 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Origem', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                    Text(
+                      'Origem',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                    ),
                     Text(
                       origin,
                       style: TextStyle(
@@ -3374,7 +3527,10 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Destino', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                    Text(
+                      'Destino',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                    ),
                     Text(
                       destination,
                       style: TextStyle(
@@ -3393,7 +3549,11 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
           SizedBox(height: 12),
           Row(
             children: [
-              Icon(icon, size: 16, color: isCanceled ? Colors.grey[400] : Colors.grey[500]),
+              Icon(
+                icon,
+                size: 16,
+                color: isCanceled ? Colors.grey[400] : Colors.grey[500],
+              ),
               SizedBox(width: 8),
               Text(
                 vehicle,
@@ -3406,14 +3566,21 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
               SizedBox(width: 8),
               Text(
                 '• $plate',
-                style: TextStyle(fontSize: 12, color: isCanceled ? Colors.grey[400] : Colors.grey[500]),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isCanceled ? Colors.grey[400] : Colors.grey[500],
+                ),
               ),
             ],
           ),
           SizedBox(height: 8),
           Row(
             children: [
-              Icon(Icons.person, size: 16, color: isCanceled ? Colors.grey[400] : Colors.grey[500]),
+              Icon(
+                Icons.person,
+                size: 16,
+                color: isCanceled ? Colors.grey[400] : Colors.grey[500],
+              ),
               SizedBox(width: 8),
               Text(
                 driver,
@@ -3511,21 +3678,33 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                     Row(
                       children: [
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Text('💳 Crédito', style: TextStyle(color: Colors.white)),
+                          child: Text(
+                            '💳 Crédito',
+                            style: TextStyle(color: Colors.white),
+                          ),
                         ),
                         SizedBox(width: 8),
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Text('📱 PIX', style: TextStyle(color: Colors.white)),
+                          child: Text(
+                            '📱 PIX',
+                            style: TextStyle(color: Colors.white),
+                          ),
                         ),
                       ],
                     ),
@@ -3631,10 +3810,7 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
           children: [
             Container(
               padding: EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-              ),
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
               child: Icon(icon, color: iconColor, size: 24),
             ),
             SizedBox(width: 16),
@@ -3671,11 +3847,7 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
+          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
         ],
       ),
       padding: EdgeInsets.all(16),
@@ -3730,9 +3902,7 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                 padding: EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  border: Border(
-                    bottom: BorderSide(color: Colors.grey[200]!),
-                  ),
+                  border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
                 ),
                 child: Row(
                   children: [
@@ -3904,9 +4074,7 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
         ),
         Container(
           color: Colors.white,
-          child: Column(
-            children: items,
-          ),
+          child: Column(children: items),
         ),
         SizedBox(height: 8),
       ],
@@ -3934,9 +4102,7 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                 color: iconColor.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Center(
-                child: Icon(icon, size: 20, color: iconColor),
-              ),
+              child: Center(child: Icon(icon, size: 20, color: iconColor)),
             ),
             SizedBox(width: 16),
             Expanded(
@@ -3945,19 +4111,13 @@ class _DeliveryAppState extends State<DeliveryApp> with SingleTickerProviderStat
                 children: [
                   Text(
                     title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                   if (subtitle != null) ...[
                     SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[500],
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[500]),
                     ),
                   ],
                 ],
