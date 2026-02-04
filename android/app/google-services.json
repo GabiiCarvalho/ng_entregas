@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "241764608287",
+    "project_id": "ng-express-delivery",
+    "storage_bucket": "ng-express-delivery.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:241764608287:android:5facc620048f0cfc87e82a",
+        "android_client_info": {
+          "package_name": "com.example.ng_entregas"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAFRatiSwDo3oSMIjdV22MjEZ_fxBAuErI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

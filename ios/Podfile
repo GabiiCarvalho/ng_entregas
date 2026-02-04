@@ -1,0 +1,77 @@
+platform :ios, '15.0'
+ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+
+project 'Runner', {
+  'Debug' => :debug,
+  'Profile' => :release,
+  'Release' => :release,
+}
+
+# Try to load podhelper from system Flutter installation
+system_flutter_path = '/opt/homebrew/share/flutter/packages/flutter_tools/bin/podhelper.rb'
+
+if File.exist?(system_flutter_path)
+  puts "Loading podhelper from system: #{system_flutter_path}"
+  load system_flutter_path
+else
+  puts "System podhelper not found, using fallback"
+end
+
+target 'Runner' do
+  use_frameworks! :linkage => :static
+  use_modular_headers!
+
+  # Try using the system Flutter method if it exists
+  if defined?(flutter_install_all_ios_pods)
+    # This is the method name used by system Flutter
+    flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+  elsif defined?(install_all_flutter_pods)
+    # This is the method name used by older/project Flutter
+    install_all_flutter_pods(File.expand_path('..', __dir__))
+  else
+    # Manual fallback
+    puts "Using manual pod installation"
+    
+    # Flutter framework
+    pod 'Flutter', :path => '../Flutter'
+    
+    # Install all plugins from .symlinks
+    plugins_dir = '../.symlinks/plugins'
+    if Dir.exist?(plugins_dir)
+      Dir.foreach(plugins_dir) do |plugin|
+        next if plugin == '.' || plugin == '..'
+        plugin_path = File.join(plugins_dir, plugin, 'ios')
+        if Dir.exist?(plugin_path)
+          pod plugin, :path => plugin_path
+          puts "  Added plugin: #{plugin}"
+        end
+      end
+    end
+  end
+end
+
+post_install do |installer|
+  # Try to call the system method if it exists
+  if defined?(flutter_additional_ios_build_settings)
+    installer.pods_project.targets.each do |target|
+      flutter_additional_ios_build_settings(target)
+    end
+  end
+  
+  # Common build settings
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+      config.build_settings['ENABLE_BITCODE'] = 'NO'
+      config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'NO'
+      config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
+      
+      # For Firebase pods
+      if target.name.start_with?('Firebase') || target.name.start_with?('Google') || 
+         target.name.include?('cloud_firestore') || target.name.include?('nanopb') ||
+         target.name.include?('leveldb')
+        config.build_settings['GENERATE_INFOPLIST_FILE'] = 'YES'
+      end
+    end
+  end
+end

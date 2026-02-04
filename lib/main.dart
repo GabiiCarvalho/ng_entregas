@@ -1,7 +1,50 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'firebase_options.dart';
 
-void main() {
+// Importações das telas de autenticação
+import 'authentication/login_screen.dart';
+import 'authentication/signup_screen.dart';
+
+// Importações globais
+import 'global/global_var.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  await Permission.locationWhenInUse.isDenied.then((valueOfPermission) {
+    if (valueOfPermission) {
+      Permission.locationWhenInUse.request();
+    }
+  });
+
+  // Verificar se usuário já está logado
+  User? currentUser = FirebaseAuth.instance.currentUser;
+
+  if (currentUser != null) {
+    // Carregar dados do usuário se já estiver logado
+    DatabaseReference usersRef = FirebaseDatabase.instance
+        .ref()
+        .child("users")
+        .child(currentUser.uid);
+
+    await usersRef.once().then((snap) {
+      if (snap.snapshot.value != null) {
+        var userData = snap.snapshot.value as Map<dynamic, dynamic>;
+        userName = userData["name"]?.toString() ?? "";
+        userPhone = userData["phone"]?.toString() ?? "";
+        userID = currentUser.uid;
+      }
+    });
+  }
+
   runApp(MyApp());
 }
 
@@ -18,9 +61,16 @@ class MyApp extends StatelessWidget {
         appBarTheme: AppBarTheme(
           backgroundColor: Colors.orange[400],
           elevation: 0,
+          iconTheme: IconThemeData(color: Colors.black),
+          titleTextStyle: TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       home: DeliveryApp(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -46,7 +96,7 @@ class _DeliveryAppState extends State<DeliveryApp>
   bool _showVehicleSelection = false;
   String _cardType = '';
   bool _showPayment = false;
-  String _paymentMethod = 'cash'; // cash, card, pix, wallet
+  String _paymentMethod = 'cash';
   String _selectedVehicle = 'moto';
   bool _pixCopied = false;
   bool _showProfile = false;
@@ -57,9 +107,9 @@ class _DeliveryAppState extends State<DeliveryApp>
   late Animation<double> _animation;
 
   // Variáveis para o método de pagamento
-  String _selectedPaymentMethod = 'cash'; // 'cash', 'card', 'pix', 'wallet'
+  String _selectedPaymentMethod = 'cash';
 
-  // Mapeamentos corretos com tipos apropriados
+  // Mapeamentos para métodos de pagamento
   final Map<String, String> _paymentMethodDisplay = {
     'cash': 'Dinheiro',
     'card': 'Cartão',
@@ -88,17 +138,6 @@ class _DeliveryAppState extends State<DeliveryApp>
     'wallet': 'Saldo: R\$125,00',
   };
 
-  final Map<String, String> _authData = {
-    'name': '',
-    'email': '',
-    'phone': '',
-    'password': '',
-  };
-
-  String _selectedItemType = 'Itens pessoais';
-  String _itemValue = '';
-  String _deliveryNotes = '';
-
   // Mapeamento de ícones para tipos de itens
   final Map<String, IconData> _itemIcons = {
     'Itens pessoais': Icons.person,
@@ -111,6 +150,27 @@ class _DeliveryAppState extends State<DeliveryApp>
     'Outros': Icons.more_horiz,
   };
 
+  String _selectedItemType = 'Itens pessoais';
+  String _itemValue = '';
+  String _deliveryNotes = '';
+
+  // Controladores para formulários
+  final TextEditingController _destinationAddressController =
+      TextEditingController();
+  final TextEditingController _destinationDetailsController =
+      TextEditingController();
+  final TextEditingController _destinationNameController =
+      TextEditingController();
+  final TextEditingController _destinationPhoneController =
+      TextEditingController();
+
+  final TextEditingController _senderAddressController =
+      TextEditingController();
+  final TextEditingController _senderDetailsController =
+      TextEditingController();
+  final TextEditingController _senderNameController = TextEditingController();
+  final TextEditingController _senderPhoneController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -122,12 +182,26 @@ class _DeliveryAppState extends State<DeliveryApp>
       parent: _animationController,
       curve: Curves.easeInOut,
     );
+
+    // Verificar se usuário já está logado ao iniciar
+    _checkIfUserIsLoggedIn();
   }
 
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
+  Future<void> _checkIfUserIsLoggedIn() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      // Usuário já está logado, ir direto para tela principal
+      await Future.delayed(Duration(milliseconds: 1500)); // Tempo do splash
+      setState(() {
+        _currentScreen = 'main';
+      });
+    } else {
+      // Usuário não está logado, mostrar splash e depois auth
+      await Future.delayed(Duration(milliseconds: 2000));
+      setState(() {
+        _currentScreen = 'auth';
+      });
+    }
   }
 
   void _switchTabs(String newTab) {
@@ -155,6 +229,45 @@ class _DeliveryAppState extends State<DeliveryApp>
     });
   }
 
+  void _logoutUser() async {
+    await FirebaseAuth.instance.signOut();
+    setState(() {
+      _currentScreen = 'auth';
+      _isLogin = true;
+      _showProfile = false;
+      _deliveryAddressSet = false;
+
+      // Limpar dados do usuário
+      userName = '';
+      userPhone = '';
+      userID = '';
+
+      // Limpar formulários
+      _destinationAddressController.clear();
+      _destinationDetailsController.clear();
+      _destinationNameController.clear();
+      _destinationPhoneController.clear();
+      _senderAddressController.clear();
+      _senderDetailsController.clear();
+      _senderNameController.clear();
+      _senderPhoneController.clear();
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    _destinationAddressController.dispose();
+    _destinationDetailsController.dispose();
+    _destinationNameController.dispose();
+    _destinationPhoneController.dispose();
+    _senderAddressController.dispose();
+    _senderDetailsController.dispose();
+    _senderNameController.dispose();
+    _senderPhoneController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     SystemChrome.setPreferredOrientations([
@@ -162,14 +275,31 @@ class _DeliveryAppState extends State<DeliveryApp>
       DeviceOrientation.portraitDown,
     ]);
 
-    if (_currentScreen == 'splash') {
-      return _buildSplashScreen();
+    // Verificar se usuário está logado
+    User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null &&
+        _currentScreen != 'splash' &&
+        _currentScreen != 'auth') {
+      // Usuário deslogado, redirecionar para auth
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        setState(() {
+          _currentScreen = 'auth';
+          _isLogin = true;
+        });
+      });
     }
 
-    if (_currentScreen == 'auth') {
-      return _buildAuthScreen();
+    // Sistema de navegação baseado no estado atual
+    switch (_currentScreen) {
+      case 'splash':
+        return _buildSplashScreen();
+      case 'auth':
+        return _buildAuthScreen();
+      case 'main':
+        return _buildMainScreen();
     }
 
+    // Telas modais (sobrepostas)
     if (_showProfile) {
       return _buildProfileScreen();
     }
@@ -214,7 +344,7 @@ class _DeliveryAppState extends State<DeliveryApp>
       return _buildDeliveryDetailsScreen();
     }
 
-    return _buildMainScreen();
+    return _buildMainScreen(); // Fallback
   }
 
   Widget _buildSplashScreen() {
@@ -258,6 +388,13 @@ class _DeliveryAppState extends State<DeliveryApp>
                     width: 125,
                     height: 125,
                     fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Icon(
+                        Icons.local_shipping,
+                        size: 60,
+                        color: Colors.orange[400],
+                      );
+                    },
                   ),
                 ),
               ),
@@ -287,28 +424,9 @@ class _DeliveryAppState extends State<DeliveryApp>
                 ),
               ),
               SizedBox(height: 60),
-              SizedBox(
-                width: 280,
-                child: ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _currentScreen = 'auth';
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.orange[600],
-                    padding: EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    elevation: 5,
-                  ),
-                  child: Text(
-                    'Começar',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                ),
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                strokeWidth: 2,
               ),
             ],
           ),
@@ -334,6 +452,13 @@ class _DeliveryAppState extends State<DeliveryApp>
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 10,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: Center(
                       child: Image.asset(
@@ -341,6 +466,13 @@ class _DeliveryAppState extends State<DeliveryApp>
                         width: 60,
                         height: 60,
                         fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Icon(
+                            Icons.local_shipping,
+                            size: 40,
+                            color: Colors.orange[400],
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -357,259 +489,1085 @@ class _DeliveryAppState extends State<DeliveryApp>
               ),
             ),
             Expanded(
+              child: _isLogin
+                  ? LoginScreen() // Tela de login existente
+                  : SignUpScreen(), // Tela de cadastro
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMainScreen() {
+    // Obter dados do usuário logado
+    String displayName = userName.isNotEmpty ? userName : 'Usuário';
+    String displayInitial = displayName.isNotEmpty
+        ? displayName[0].toUpperCase()
+        : 'U';
+    String displayPhone = userPhone.isNotEmpty ? userPhone : '';
+
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header com informações do usuário
+            Container(
+              width: double.infinity,
+              color: Colors.orange[400],
+              padding: EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _showProfile = true;
+                      });
+                    },
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Colors.red[400]!, Colors.pink[400]!],
+                        ),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          displayInitial,
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Olá, $displayName!',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                        if (displayPhone.isNotEmpty)
+                          Text(
+                            displayPhone,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.black87,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
               child: SingleChildScrollView(
-                padding: EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              setState(() {
-                                _isLogin = true;
-                              });
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _isLogin
-                                  ? Colors.orange[400]
-                                  : Colors.white,
-                              foregroundColor: _isLogin
-                                  ? Colors.white
-                                  : Colors.grey[600],
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              padding: EdgeInsets.symmetric(vertical: 16),
-                            ),
-                            child: Text(
-                              'Entrar',
-                              style: TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 16),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              setState(() {
-                                _isLogin = false;
-                              });
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: !_isLogin
-                                  ? Colors.orange[400]
-                                  : Colors.white,
-                              foregroundColor: !_isLogin
-                                  ? Colors.white
-                                  : Colors.grey[600],
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              padding: EdgeInsets.symmetric(vertical: 16),
-                            ),
-                            child: Text(
-                              'Cadastrar',
-                              style: TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 24),
-                    if (!_isLogin) ...[
-                      TextField(
-                        decoration: InputDecoration(
-                          prefixIcon: Icon(
-                            Icons.person,
-                            color: Colors.grey[400],
-                          ),
-                          hintText: 'Nome completo',
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[200]!),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: Colors.orange[400]!,
-                              width: 2,
-                            ),
-                          ),
-                          contentPadding: EdgeInsets.symmetric(
-                            vertical: 16,
-                            horizontal: 12,
-                          ),
-                        ),
-                        onChanged: (value) {
-                          setState(() {
-                            _authData['name'] = value;
-                          });
-                        },
-                      ),
-                      SizedBox(height: 16),
-                    ],
-                    TextField(
-                      decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.email, color: Colors.grey[400]),
-                        hintText: 'E-mail',
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey[200]!),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: Colors.orange[400]!,
-                            width: 2,
-                          ),
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          vertical: 16,
-                          horizontal: 12,
-                        ),
-                      ),
-                      onChanged: (value) {
-                        setState(() {
-                          _authData['email'] = value;
-                        });
-                      },
-                    ),
-                    SizedBox(height: 16),
-                    TextField(
-                      decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.phone, color: Colors.grey[400]),
-                        hintText: 'Telefone (obrigatório)',
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey[200]!),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: Colors.orange[400]!,
-                            width: 2,
-                          ),
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          vertical: 16,
-                          horizontal: 12,
-                        ),
-                      ),
-                      keyboardType: TextInputType.phone,
-                      onChanged: (value) {
-                        setState(() {
-                          _authData['phone'] = value;
-                        });
-                      },
-                    ),
-                    SizedBox(height: 16),
-                    TextField(
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.lock, color: Colors.grey[400]),
-                        hintText: 'Senha',
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey[200]!),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: Colors.orange[400]!,
-                            width: 2,
-                          ),
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          vertical: 16,
-                          horizontal: 12,
-                        ),
-                      ),
-                      onChanged: (value) {
-                        setState(() {
-                          _authData['password'] = value;
-                        });
-                      },
-                    ),
-                    SizedBox(height: 24),
-                    SizedBox(
+                    Container(
                       width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            _currentScreen = 'main';
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orange[400],
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      color: Colors.white,
+                      padding: EdgeInsets.only(top: 40, bottom: 32),
+                      child: Column(
+                        children: [
+                          Text(
+                            'VOCÊ PRECISA,',
+                            style: TextStyle(
+                              fontSize: 20,
+                              color: Colors.black87,
+                            ),
                           ),
-                          padding: EdgeInsets.symmetric(vertical: 18),
-                        ),
-                        child: Text(
-                          _isLogin ? 'Entrar' : 'Criar conta',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                          SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.orange[400],
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                padding: EdgeInsets.all(8),
+                                child: Icon(
+                                  Icons.chevron_right,
+                                  size: 24,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'NG EXPRESS Entrega',
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
+                          SizedBox(height: 32),
+                        ],
                       ),
                     ),
-                    SizedBox(height: 24),
-                    Row(
-                      children: [
-                        Expanded(child: Divider(color: Colors.grey[300])),
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16),
-                          child: Text(
-                            'ou',
-                            style: TextStyle(color: Colors.grey[500]),
+                    Container(
+                      color: Colors.white,
+                      child: Column(
+                        children: [
+                          // BOTÕES DE SELEÇÃO ENVIAR/RECEBER
+                          SizedBox(
+                            width: double.infinity,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: TextButton(
+                                    onPressed: () => _switchTabs('enviar'),
+                                    style: TextButton.styleFrom(
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: 20,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.zero,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Text(
+                                          'Enviar',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w600,
+                                            color: _activeTab == 'enviar'
+                                                ? Colors.black
+                                                : Colors.grey[400],
+                                          ),
+                                        ),
+                                        SizedBox(height: 4),
+                                        if (_activeTab == 'enviar')
+                                          Container(
+                                            height: 4,
+                                            decoration: BoxDecoration(
+                                              color: Colors.orange[400],
+                                              borderRadius: BorderRadius.only(
+                                                topLeft: Radius.circular(2),
+                                                topRight: Radius.circular(2),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: TextButton(
+                                    onPressed: () => _switchTabs('receber'),
+                                    style: TextButton.styleFrom(
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: 20,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.zero,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Text(
+                                          'Receber',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w600,
+                                            color: _activeTab == 'receber'
+                                                ? Colors.black
+                                                : Colors.grey[400],
+                                          ),
+                                        ),
+                                        SizedBox(height: 4),
+                                        if (_activeTab == 'receber')
+                                          Container(
+                                            height: 4,
+                                            decoration: BoxDecoration(
+                                              color: Colors.orange[400],
+                                              borderRadius: BorderRadius.only(
+                                                topLeft: Radius.circular(2),
+                                                topRight: Radius.circular(2),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        Expanded(child: Divider(color: Colors.grey[300])),
-                      ],
-                    ),
-                    SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _currentScreen = 'main';
-                          });
-                        },
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          side: BorderSide(color: Colors.grey[200]!, width: 2),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+
+                          // ÁREA DOS INPUTS COM ANIMAÇÃO
+                          AnimatedSwitcher(
+                            duration: Duration(milliseconds: 300),
+                            transitionBuilder:
+                                (Widget child, Animation<double> animation) {
+                                  return SlideTransition(
+                                    position: Tween<Offset>(
+                                      begin: Offset(0.0, 0.5),
+                                      end: Offset.zero,
+                                    ).animate(animation),
+                                    child: FadeTransition(
+                                      opacity: animation,
+                                      child: child,
+                                    ),
+                                  );
+                                },
+                            child: _activeTab == 'enviar'
+                                ? _buildSendContent()
+                                : _buildReceiveContent(),
                           ),
-                          padding: EdgeInsets.symmetric(vertical: 18),
-                        ),
-                        icon: Icon(Icons.g_mobiledata, size: 24),
-                        label: Text(
-                          'Continuar com Google',
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
+                        ],
                       ),
                     ),
-                    SizedBox(height: 16),
                   ],
                 ),
               ),
             ),
           ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        height: 80,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Colors.grey[200]!)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 4,
+              offset: Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            // Botão Histórico
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _showHistory = true;
+                });
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.history, size: 24, color: Colors.grey[400]),
+                    SizedBox(height: 4),
+                    Text(
+                      'Histórico',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[400]),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Botão Central (Pesquisar)
+            Container(
+              margin: EdgeInsets.only(bottom: 24),
+              child: FloatingActionButton(
+                onPressed: () {
+                  // Abrir busca de entregas
+                },
+                backgroundColor: Colors.orange[400],
+                elevation: 4,
+                child: Icon(Icons.search, size: 28, color: Colors.white),
+              ),
+            ),
+
+            // Botão Carteira
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _showWallet = true;
+                });
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.payments, size: 24, color: Colors.grey[400]),
+                    SizedBox(height: 4),
+                    Text(
+                      'Carteira',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[400]),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSendContent() {
+    return SingleChildScrollView(
+      key: ValueKey('enviar'),
+      padding: EdgeInsets.all(20),
+      child: Column(
+        children: [
+          // Endereço do remetente (usuário logado)
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _showSenderForm = true;
+              });
+            },
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              padding: EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.orange[400],
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          userName.isNotEmpty ? userName : 'Seu nome',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          userPhone.isNotEmpty ? userPhone : 'Seu telefone',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[400],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: Colors.grey[400],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(height: 16),
+
+          // Endereço de destino
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _showDestinationForm = true;
+              });
+            },
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              padding: EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.orange[400]!, width: 2),
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      'Entregar para',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: Colors.grey[400],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(height: 24),
+
+          // Botão de continuar
+          ElevatedButton(
+            onPressed: _deliveryAddressSet
+                ? () {
+                    setState(() {
+                      _showDeliveryDetails = true;
+                    });
+                  }
+                : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _deliveryAddressSet
+                  ? Colors.orange[400]
+                  : Colors.grey[400],
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+              padding: EdgeInsets.symmetric(vertical: 20),
+              minimumSize: Size(double.infinity, 0),
+            ),
+            child: Text(
+              _deliveryAddressSet
+                  ? 'Continuar'
+                  : 'Selecione o endereço de entrega',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReceiveContent() {
+    return SingleChildScrollView(
+      key: ValueKey('receber'),
+      padding: EdgeInsets.all(20),
+      child: Column(
+        children: [
+          // Endereço do remetente
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _showSenderForm = true;
+              });
+            },
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              padding: EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.orange[400],
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      'Enviar de',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: Colors.grey[400],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(height: 16),
+
+          // Endereço do destinatário (usuário logado)
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _showDestinationForm = true;
+              });
+            },
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              padding: EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.orange[400]!, width: 2),
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          userName.isNotEmpty ? userName : 'Seu nome',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          userPhone.isNotEmpty ? userPhone : 'Seu telefone',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[400],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: Colors.grey[400],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(height: 24),
+
+          // Botão de continuar
+          ElevatedButton(
+            onPressed: _deliveryAddressSet
+                ? () {
+                    setState(() {
+                      _showDeliveryDetails = true;
+                    });
+                  }
+                : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _deliveryAddressSet
+                  ? Colors.orange[400]
+                  : Colors.grey[400],
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+              padding: EdgeInsets.symmetric(vertical: 20),
+              minimumSize: Size(double.infinity, 0),
+            ),
+            child: Text(
+              _deliveryAddressSet
+                  ? 'Continuar'
+                  : 'Selecione o endereço de entrega',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileScreen() {
+    String displayName = userName.isNotEmpty ? userName : 'Usuário';
+    String displayInitial = displayName.isNotEmpty
+        ? displayName[0].toUpperCase()
+        : 'U';
+    String userEmail = FirebaseAuth.instance.currentUser?.email ?? '';
+
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.chevron_left),
+          onPressed: () {
+            setState(() {
+              _showProfile = false;
+            });
+          },
+        ),
+        title: Text('Meu Perfil'),
+        backgroundColor: Colors.orange[400],
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              // Header do perfil
+              Container(
+                padding: EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Colors.red[400]!, Colors.pink[400]!],
+                        ),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          displayInitial,
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            displayName,
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          if (userEmail.isNotEmpty)
+                            Text(
+                              userEmail,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          SizedBox(height: 4),
+                          if (userPhone.isNotEmpty)
+                            Text(
+                              userPhone,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        // Editar perfil
+                      },
+                      icon: Icon(Icons.edit, color: Colors.orange[400]),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Seções do perfil
+              _buildProfileSection(
+                title: 'Conta',
+                items: [
+                  _buildProfileItem(
+                    title: 'Minhas informações',
+                    icon: Icons.person,
+                    iconColor: Colors.blue[600]!,
+                  ),
+                  _buildProfileItem(
+                    title: 'Endereços salvos',
+                    icon: Icons.location_on,
+                    iconColor: Colors.green[600]!,
+                  ),
+                  _buildProfileItem(
+                    title: 'Formas de pagamento',
+                    icon: Icons.credit_card,
+                    iconColor: Colors.purple[600]!,
+                  ),
+                ],
+              ),
+
+              _buildProfileSection(
+                title: 'Ajuda',
+                items: [
+                  _buildProfileItem(
+                    title: 'Central de ajuda',
+                    icon: Icons.help,
+                    iconColor: Colors.blue[600]!,
+                  ),
+                  _buildProfileItem(
+                    title: 'Central de segurança',
+                    icon: Icons.security,
+                    iconColor: Colors.green[600]!,
+                  ),
+                  _buildProfileItem(
+                    title: 'Configurações',
+                    icon: Icons.settings,
+                    iconColor: Colors.grey[600]!,
+                  ),
+                ],
+              ),
+
+              _buildProfileSection(
+                title: 'Convide',
+                items: [
+                  _buildProfileItem(
+                    title: 'Convide Amigos',
+                    icon: Icons.group_add,
+                    iconColor: Colors.purple[600]!,
+                    onTap: () {
+                      // Compartilhar código de indicação
+                    },
+                  ),
+                ],
+              ),
+
+              _buildProfileSection(
+                title: 'Oportunidades',
+                items: [
+                  _buildProfileItem(
+                    title: 'Seja Motorista',
+                    icon: Icons.directions_car,
+                    iconColor: Colors.orange[600]!,
+                    onTap: () {
+                      // Abrir cadastro de motorista
+                    },
+                  ),
+                ],
+              ),
+
+              // Botão de logout
+              Padding(
+                padding: EdgeInsets.all(20),
+                child: ElevatedButton(
+                  onPressed: _logoutUser,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red[50],
+                    foregroundColor: Colors.red[600],
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    minimumSize: Size(double.infinity, 0),
+                    elevation: 0,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.logout, size: 20),
+                      SizedBox(width: 8),
+                      Text('Sair da conta'),
+                    ],
+                  ),
+                ),
+              ),
+
+              SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileSection({
+    required String title,
+    required List<Widget> items,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[600],
+            ),
+          ),
+        ),
+        Container(
+          color: Colors.white,
+          child: Column(children: items),
+        ),
+        SizedBox(height: 8),
+      ],
+    );
+  }
+
+  Widget _buildProfileItem({
+    required String title,
+    required IconData icon,
+    required Color iconColor,
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        color: Colors.white,
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Center(child: Icon(icon, size: 20, color: iconColor)),
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildItemDetailsScreen() {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.chevron_left),
+          onPressed: () {
+            setState(() {
+              _showItemDetails = false;
+            });
+          },
+        ),
+        title: Text('Detalhes do item'),
+        backgroundColor: Colors.orange[400],
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Detalhes do item',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 20),
+              Text(
+                'Tipo de item',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _itemIcons.keys.map((item) {
+                  return ChoiceChip(
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _itemIcons[item]!,
+                          size: 16,
+                          color: _selectedItemType == item
+                              ? Colors.white
+                              : Colors.grey[600],
+                        ),
+                        SizedBox(width: 4),
+                        Text(item),
+                      ],
+                    ),
+                    selected: _selectedItemType == item,
+                    onSelected: (selected) {
+                      setState(() {
+                        _selectedItemType = item;
+                      });
+                    },
+                    selectedColor: Colors.orange[400],
+                    labelStyle: TextStyle(
+                      color: _selectedItemType == item
+                          ? Colors.white
+                          : Colors.black,
+                    ),
+                  );
+                }).toList(),
+              ),
+              SizedBox(height: 24),
+              Divider(),
+              SizedBox(height: 24),
+              Text(
+                'Valor do item',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              SizedBox(height: 12),
+              TextField(
+                decoration: InputDecoration(
+                  prefixIcon: Icon(Icons.attach_money, color: Colors.grey[400]),
+                  hintText: 'Insira o valor do item',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Colors.orange[400]!,
+                      width: 2,
+                    ),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                ),
+                keyboardType: TextInputType.number,
+                onChanged: (value) {
+                  setState(() {
+                    _itemValue = value;
+                  });
+                },
+              ),
+              SizedBox(height: 8),
+              Text(
+                'A NG EXPRESS não sugere envio de itens com valor superior a R\$500',
+                style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+              ),
+              SizedBox(height: 24),
+              Divider(),
+              SizedBox(height: 24),
+              Text(
+                'Observações da entrega',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              SizedBox(height: 12),
+              TextField(
+                maxLines: 4,
+                maxLength: 100,
+                decoration: InputDecoration(
+                  prefixIcon: Icon(Icons.note, color: Colors.grey[400]),
+                  hintText: 'Adicione uma descrição ou observações',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Colors.orange[400]!,
+                      width: 2,
+                    ),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _deliveryNotes = value;
+                  });
+                },
+              ),
+              SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  '${_deliveryNotes.length}/100',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                ),
+              ),
+              SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _showItemDetails = false;
+                    _showPayment = true;
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange[400],
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  minimumSize: Size(double.infinity, 0),
+                ),
+                child: Text(
+                  'Confirmar',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -869,6 +1827,334 @@ class _DeliveryAppState extends State<DeliveryApp>
     );
   }
 
+  Widget _buildDestinationFormScreen() {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.chevron_left),
+          onPressed: () {
+            setState(() {
+              _showDestinationForm = false;
+            });
+          },
+        ),
+        title: Text('Informações do destinatário'),
+        backgroundColor: Colors.orange[400],
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            children: [
+              TextField(
+                controller: _destinationAddressController,
+                decoration: InputDecoration(
+                  labelText: 'Endereço*',
+                  hintText: 'Selecionar endereço de entrega',
+                  suffixIcon: Icon(Icons.arrow_forward_ios),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Colors.orange[400]!,
+                      width: 2,
+                    ),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                ),
+                onTap: () {
+                  // Implementar seleção de endereço
+                },
+              ),
+              SizedBox(height: 16),
+              TextField(
+                controller: _destinationDetailsController,
+                decoration: InputDecoration(
+                  labelText: 'Detalhes do endereço',
+                  hintText: 'Ex.: bloco A, apartamento 201',
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Colors.orange[400]!,
+                      width: 2,
+                    ),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+              TextField(
+                controller: _destinationNameController,
+                decoration: InputDecoration(
+                  labelText: 'Nome para contato*',
+                  hintText: 'Digite o nome do destinatário',
+                  suffixIcon: Icon(Icons.person),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Colors.orange[400]!,
+                      width: 2,
+                    ),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+              TextField(
+                controller: _destinationPhoneController,
+                decoration: InputDecoration(
+                  labelText: 'Número de telefone*',
+                  hintText: 'Telefone do destinatário',
+                  prefix: Container(
+                    padding: EdgeInsets.only(right: 8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [Text('🇧🇷'), SizedBox(width: 4), Text('+55')],
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Colors.orange[400]!,
+                      width: 2,
+                    ),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                ),
+                keyboardType: TextInputType.phone,
+              ),
+              SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: () {
+                  if (_destinationAddressController.text.isNotEmpty &&
+                      _destinationNameController.text.isNotEmpty &&
+                      _destinationPhoneController.text.isNotEmpty) {
+                    setState(() {
+                      _deliveryAddressSet = true;
+                      _showDestinationForm = false;
+                      _showDeliveryDetails = true;
+                    });
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange[400],
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  minimumSize: Size(double.infinity, 0),
+                ),
+                child: Text(
+                  'Continuar',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSenderFormScreen() {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.chevron_left),
+          onPressed: () {
+            setState(() {
+              _showSenderForm = false;
+            });
+          },
+        ),
+        title: Text('Informações do remetente'),
+        backgroundColor: Colors.orange[400],
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            children: [
+              TextField(
+                controller: _senderAddressController,
+                decoration: InputDecoration(
+                  labelText: 'Endereço*',
+                  hintText: 'Selecionar endereço de coleta',
+                  suffixIcon: Icon(Icons.arrow_forward_ios),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Colors.orange[400]!,
+                      width: 2,
+                    ),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                ),
+                onTap: () {
+                  // Implementar seleção de endereço
+                },
+              ),
+              SizedBox(height: 16),
+              TextField(
+                controller: _senderDetailsController,
+                decoration: InputDecoration(
+                  labelText: 'Detalhes do endereço',
+                  hintText: 'Ex.: bloco A, apartamento 201',
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Colors.orange[400]!,
+                      width: 2,
+                    ),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+              TextField(
+                controller: _senderNameController,
+                decoration: InputDecoration(
+                  labelText: 'Nome para contato*',
+                  hintText: 'Digite o nome do remetente',
+                  suffixIcon: Icon(Icons.person),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Colors.orange[400]!,
+                      width: 2,
+                    ),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+              TextField(
+                controller: _senderPhoneController,
+                decoration: InputDecoration(
+                  labelText: 'Número de telefone*',
+                  hintText: 'Telefone do remetente',
+                  prefix: Container(
+                    padding: EdgeInsets.only(right: 8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [Text('🇧🇷'), SizedBox(width: 4), Text('+55')],
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Colors.orange[400]!,
+                      width: 2,
+                    ),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                ),
+                keyboardType: TextInputType.phone,
+              ),
+              SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: () {
+                  if (_senderAddressController.text.isNotEmpty &&
+                      _senderNameController.text.isNotEmpty &&
+                      _senderPhoneController.text.isNotEmpty) {
+                    setState(() {
+                      _showSenderForm = false;
+                    });
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange[400],
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  minimumSize: Size(double.infinity, 0),
+                ),
+                child: Text(
+                  'Confirmar',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildDeliveryDetailsScreen() {
     return Scaffold(
       appBar: AppBar(
@@ -907,7 +2193,9 @@ class _DeliveryAppState extends State<DeliveryApp>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Rua Olga Bernardes Amorim, 101',
+                      _senderAddressController.text.isNotEmpty
+                          ? _senderAddressController.text
+                          : 'Endereço do remetente',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -915,7 +2203,7 @@ class _DeliveryAppState extends State<DeliveryApp>
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Gabriele · 47996412384',
+                      '${_senderNameController.text} · ${_senderPhoneController.text}',
                       style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                   ],
@@ -953,7 +2241,9 @@ class _DeliveryAppState extends State<DeliveryApp>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Rua Victor P. Correia, 184 - apto 1',
+                      _destinationAddressController.text.isNotEmpty
+                          ? _destinationAddressController.text
+                          : 'Endereço do destinatário',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -961,7 +2251,7 @@ class _DeliveryAppState extends State<DeliveryApp>
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Veronica · 47996674426',
+                      '${_destinationNameController.text} · ${_destinationPhoneController.text}',
                       style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                   ],
@@ -1282,7 +2572,7 @@ class _DeliveryAppState extends State<DeliveryApp>
 
               SizedBox(height: 16),
 
-              // Seção de pagamento - COMO NA IMAGEM
+              // Seção de pagamento
               Container(
                 padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -1298,7 +2588,7 @@ class _DeliveryAppState extends State<DeliveryApp>
                 ),
                 child: Column(
                   children: [
-                    // Linha do método de pagamento (clicável para trocar)
+                    // Linha do método de pagamento
                     GestureDetector(
                       onTap: () {
                         _showPaymentMethodSelection();
@@ -1405,7 +2695,6 @@ class _DeliveryAppState extends State<DeliveryApp>
     );
   }
 
-  // Método para mostrar a seleção de método de pagamento
   void _showPaymentMethodSelection() {
     showModalBottomSheet(
       context: context,
@@ -1578,1068 +2867,52 @@ class _DeliveryAppState extends State<DeliveryApp>
     );
   }
 
-  Widget _buildMainScreen() {
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              color: Colors.orange[400],
-              padding: EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _showProfile = true;
-                      });
-                    },
-                    child: Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Colors.red[400]!, Colors.pink[400]!],
-                        ),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          'G',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 16),
-                  Text(
-                    'Olá, Gabriele!',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      color: Colors.white,
-                      padding: EdgeInsets.only(top: 40, bottom: 32),
-                      child: Column(
-                        children: [
-                          Text(
-                            'VOCÊ PRECISA,',
-                            style: TextStyle(
-                              fontSize: 20,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.orange[400],
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                padding: EdgeInsets.all(8),
-                                child: Icon(
-                                  Icons.chevron_right,
-                                  size: 24,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'NG EXPRESS Entrega',
-                                style: TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 32),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      color: Colors.white,
-                      child: Column(
-                        children: [
-                          // BOTÕES DE SELEÇÃO ENVIAR/RECEBER
-                          SizedBox(
-                            width: double.infinity,
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: TextButton(
-                                    onPressed: () => _switchTabs('enviar'),
-                                    style: TextButton.styleFrom(
-                                      padding: EdgeInsets.symmetric(
-                                        vertical: 20,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.zero,
-                                      ),
-                                    ),
-                                    child: Column(
-                                      children: [
-                                        Text(
-                                          'Enviar',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w600,
-                                            color: _activeTab == 'enviar'
-                                                ? Colors.black
-                                                : Colors.grey[400],
-                                          ),
-                                        ),
-                                        SizedBox(height: 4),
-                                        if (_activeTab == 'enviar')
-                                          Container(
-                                            height: 4,
-                                            decoration: BoxDecoration(
-                                              color: Colors.orange[400],
-                                              borderRadius: BorderRadius.only(
-                                                topLeft: Radius.circular(2),
-                                                topRight: Radius.circular(2),
-                                              ),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: TextButton(
-                                    onPressed: () => _switchTabs('receber'),
-                                    style: TextButton.styleFrom(
-                                      padding: EdgeInsets.symmetric(
-                                        vertical: 20,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.zero,
-                                      ),
-                                    ),
-                                    child: Column(
-                                      children: [
-                                        Text(
-                                          'Receber',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w600,
-                                            color: _activeTab == 'receber'
-                                                ? Colors.black
-                                                : Colors.grey[400],
-                                          ),
-                                        ),
-                                        SizedBox(height: 4),
-                                        if (_activeTab == 'receber')
-                                          Container(
-                                            height: 4,
-                                            decoration: BoxDecoration(
-                                              color: Colors.orange[400],
-                                              borderRadius: BorderRadius.only(
-                                                topLeft: Radius.circular(2),
-                                                topRight: Radius.circular(2),
-                                              ),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          // ÁREA DOS INPUTS COM ANIMAÇÃO VERTICAL SIMPLIFICADA
-                          AnimatedSwitcher(
-                            duration: Duration(milliseconds: 300),
-                            transitionBuilder:
-                                (Widget child, Animation<double> animation) {
-                                  return SlideTransition(
-                                    position: Tween<Offset>(
-                                      begin: Offset(0.0, 0.5),
-                                      end: Offset.zero,
-                                    ).animate(animation),
-                                    child: FadeTransition(
-                                      opacity: animation,
-                                      child: child,
-                                    ),
-                                  );
-                                },
-                            child: _activeTab == 'enviar'
-                                ? _buildSendContent()
-                                : _buildReceiveContent(),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: Container(
-        height: 80,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: Colors.grey[200]!)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            GestureDetector(
-              onTap: () {
-                setState(() {
-                  _showHistory = true;
-                });
-              },
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.history, size: 24, color: Colors.grey[400]),
-                  SizedBox(height: 4),
-                  Text(
-                    'Histórico',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[400]),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              margin: EdgeInsets.only(bottom: 24),
-              child: FloatingActionButton(
-                onPressed: () {},
-                backgroundColor: Colors.orange[400],
-                elevation: 4,
-                child: Icon(Icons.search, size: 28),
-              ),
-            ),
-            GestureDetector(
-              onTap: () {
-                setState(() {
-                  _showWallet = true;
-                });
-              },
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.payments, size: 24, color: Colors.grey[400]),
-                  SizedBox(height: 4),
-                  Text(
-                    'Carteira',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[400]),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSendContent() {
-    return SingleChildScrollView(
-      key: ValueKey('enviar'),
-      padding: EdgeInsets.all(20),
-      child: Column(
-        children: [
-          // Para ENVIAR: Endereço do usuário (remetente) em cima, "Entregar para" embaixo
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                _showSenderForm = true;
-              });
-            },
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              padding: EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.orange[400],
-                    ),
-                  ),
-                  SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Rua Olga Bernardes Amorim, 101',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          'Gabriele · 47996412384',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[400],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    size: 16,
-                    color: Colors.grey[400],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SizedBox(height: 16),
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                _showDestinationForm = true;
-              });
-            },
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              padding: EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.orange[400]!, width: 2),
-                    ),
-                  ),
-                  SizedBox(width: 16),
-                  Expanded(
-                    child: Text(
-                      'Entregar para',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    size: 16,
-                    color: Colors.grey[400],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: _deliveryAddressSet
-                ? () {
-                    setState(() {
-                      _showDeliveryDetails = true;
-                    });
-                  }
-                : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _deliveryAddressSet
-                  ? Colors.orange[400]
-                  : Colors.grey[400],
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-              padding: EdgeInsets.symmetric(vertical: 20),
-              minimumSize: Size(double.infinity, 0),
-            ),
-            child: Text(
-              _deliveryAddressSet
-                  ? 'Continuar'
-                  : 'Selecione o endereço de entrega',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReceiveContent() {
-    return SingleChildScrollView(
-      key: ValueKey('receber'),
-      padding: EdgeInsets.all(20),
-      child: Column(
-        children: [
-          // Para RECEBER: "Enviar de" em cima, endereço do usuário (destinatário) embaixo
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                _showSenderForm = true;
-              });
-            },
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              padding: EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.orange[400],
-                    ),
-                  ),
-                  SizedBox(width: 16),
-                  Expanded(
-                    child: Text(
-                      'Enviar de',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    size: 16,
-                    color: Colors.grey[400],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SizedBox(height: 16),
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                _showDestinationForm = true;
-              });
-            },
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              padding: EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.orange[400]!, width: 2),
-                    ),
-                  ),
-                  SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Rua Olga Bernardes Amorim, 101',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          'Gabriele · 47996412384',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[400],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    size: 16,
-                    color: Colors.grey[400],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: _deliveryAddressSet
-                ? () {
-                    setState(() {
-                      _showDeliveryDetails = true;
-                    });
-                  }
-                : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _deliveryAddressSet
-                  ? Colors.orange[400]
-                  : Colors.grey[400],
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-              padding: EdgeInsets.symmetric(vertical: 20),
-              minimumSize: Size(double.infinity, 0),
-            ),
-            child: Text(
-              _deliveryAddressSet
-                  ? 'Continuar'
-                  : 'Selecione o endereço de entrega',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildItemDetailsScreen() {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.chevron_left),
-          onPressed: () {
-            setState(() {
-              _showItemDetails = false;
-            });
-          },
-        ),
-        title: Text('Detalhes do item'),
-        backgroundColor: Colors.orange[400],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Detalhes do item',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 20),
-              Text(
-                'Tipo de item',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _itemIcons.keys.map((item) {
-                  return ChoiceChip(
-                    label: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _itemIcons[item]!,
-                          size: 16,
-                          color: _selectedItemType == item
-                              ? Colors.white
-                              : Colors.grey[600],
-                        ),
-                        SizedBox(width: 4),
-                        Text(item),
-                      ],
-                    ),
-                    selected: _selectedItemType == item,
-                    onSelected: (selected) {
-                      setState(() {
-                        _selectedItemType = item;
-                      });
-                    },
-                    selectedColor: Colors.orange[400],
-                    labelStyle: TextStyle(
-                      color: _selectedItemType == item
-                          ? Colors.white
-                          : Colors.black,
-                    ),
-                  );
-                }).toList(),
-              ),
-              SizedBox(height: 24),
-              Divider(),
-              SizedBox(height: 24),
-              Text(
-                'Valor do item',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              SizedBox(height: 12),
-              TextField(
-                decoration: InputDecoration(
-                  prefixIcon: Icon(Icons.attach_money, color: Colors.grey[400]),
-                  hintText: 'Insira o valor do item',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: Colors.orange[400]!,
-                      width: 2,
-                    ),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 12,
-                  ),
-                ),
-                keyboardType: TextInputType.number,
-                onChanged: (value) {
-                  setState(() {
-                    _itemValue = value;
-                  });
-                },
-              ),
-              SizedBox(height: 8),
-              Text(
-                'A NG EXPRESS não sugere envio de itens com valor superior a R\$500',
-                style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-              ),
-              SizedBox(height: 24),
-              Divider(),
-              SizedBox(height: 24),
-              Text(
-                'Observações da entrega',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              SizedBox(height: 12),
-              TextField(
-                maxLines: 4,
-                maxLength: 100,
-                decoration: InputDecoration(
-                  prefixIcon: Icon(Icons.note, color: Colors.grey[400]),
-                  hintText: 'Adicione uma descrição ou observações',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: Colors.orange[400]!,
-                      width: 2,
-                    ),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 12,
-                  ),
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    _deliveryNotes = value;
-                  });
-                },
-              ),
-              SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  '${_deliveryNotes.length}/100',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                ),
-              ),
-              SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    _showItemDetails = false;
-                    _showPayment = true;
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange[400],
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  padding: EdgeInsets.symmetric(vertical: 20),
-                  minimumSize: Size(double.infinity, 0),
-                ),
-                child: Text(
-                  'Confirmar',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDestinationFormScreen() {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.chevron_left),
-          onPressed: () {
-            setState(() {
-              _showDestinationForm = false;
-            });
-          },
-        ),
-        title: Text('Informações do destinatário'),
-        backgroundColor: Colors.orange[400],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(20),
-          child: Column(
-            children: [
-              TextField(
-                decoration: InputDecoration(
-                  labelText: 'Endereço*',
-                  hintText: 'Selecionar endereço de entrega',
-                  suffixIcon: Icon(Icons.arrow_forward_ios),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 12,
-                  ),
-                ),
-                readOnly: true,
-                onTap: () {
-                  // Implement address selection
-                },
-              ),
-              SizedBox(height: 16),
-              TextField(
-                decoration: InputDecoration(
-                  labelText: 'Detalhes do endereço',
-                  hintText: 'Ex.: bloco A, apartamento 201',
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: Colors.orange[400]!,
-                      width: 2,
-                    ),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 12,
-                  ),
-                ),
-              ),
-              SizedBox(height: 16),
-              TextField(
-                decoration: InputDecoration(
-                  labelText: 'Nome para contato*',
-                  hintText: 'Digite o nome do destinatário',
-                  suffixIcon: Icon(Icons.person),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: Colors.orange[400]!,
-                      width: 2,
-                    ),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 12,
-                  ),
-                ),
-              ),
-              SizedBox(height: 16),
-              TextField(
-                decoration: InputDecoration(
-                  labelText: 'Número de telefone*',
-                  hintText: 'Telefone do destinatário',
-                  prefix: Container(
-                    padding: EdgeInsets.only(right: 8),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [Text('🇧🇷'), SizedBox(width: 4), Text('+55')],
-                    ),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: Colors.orange[400]!,
-                      width: 2,
-                    ),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 12,
-                  ),
-                ),
-                keyboardType: TextInputType.phone,
-              ),
-              SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    _deliveryAddressSet = true;
-                    _showDestinationForm = false;
-                    _showDeliveryDetails = true;
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange[400],
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  padding: EdgeInsets.symmetric(vertical: 20),
-                  minimumSize: Size(double.infinity, 0),
-                ),
-                child: Text(
-                  'Continuar',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSenderFormScreen() {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.chevron_left),
-          onPressed: () {
-            setState(() {
-              _showSenderForm = false;
-            });
-          },
-        ),
-        title: Text('Informações do remetente'),
-        backgroundColor: Colors.orange[400],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(20),
-          child: Column(
-            children: [
-              TextField(
-                decoration: InputDecoration(
-                  labelText: 'Endereço*',
-                  hintText: 'Selecionar endereço de coleta',
-                  suffixIcon: Icon(Icons.arrow_forward_ios),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 12,
-                  ),
-                ),
-                readOnly: true,
-                onTap: () {
-                  // Implement address selection
-                },
-              ),
-              SizedBox(height: 16),
-              TextField(
-                decoration: InputDecoration(
-                  labelText: 'Detalhes do endereço',
-                  hintText: 'Ex.: bloco A, apartamento 201',
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: Colors.orange[400]!,
-                      width: 2,
-                    ),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 12,
-                  ),
-                ),
-              ),
-              SizedBox(height: 16),
-              TextField(
-                decoration: InputDecoration(
-                  labelText: 'Nome para contato*',
-                  hintText: 'Digite o nome do remetente',
-                  suffixIcon: Icon(Icons.person),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: Colors.orange[400]!,
-                      width: 2,
-                    ),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 12,
-                  ),
-                ),
-              ),
-              SizedBox(height: 16),
-              TextField(
-                decoration: InputDecoration(
-                  labelText: 'Número de telefone*',
-                  hintText: 'Telefone do remetente',
-                  prefix: Container(
-                    padding: EdgeInsets.only(right: 8),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [Text('🇧🇷'), SizedBox(width: 4), Text('+55')],
-                    ),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: Colors.orange[400]!,
-                      width: 2,
-                    ),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 12,
-                  ),
-                ),
-                keyboardType: TextInputType.phone,
-              ),
-              SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    _showSenderForm = false;
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange[400],
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  padding: EdgeInsets.symmetric(vertical: 20),
-                  minimumSize: Size(double.infinity, 0),
-                ),
-                child: Text(
-                  'Confirmar',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildPaymentScreen() {
     double ridePrice = _selectedVehicle == 'moto' ? 5.20 : 9.20;
 
-    // Sincroniza o método de pagamento
-    _paymentMethod = _selectedPaymentMethod;
+    // Variáveis para o mapa
+    final Completer<GoogleMapController> _mapController = Completer();
+    final LatLng _userLocation = LatLng(-23.5505, -46.6333);
+    final LatLng _driverLocation = LatLng(-23.5510, -46.6340);
+    final Set<Marker> _mapMarkers = {};
+    bool _mapReady = false;
+    bool _driverAccepted = false;
+
+    // Inicializa marcadores
+    _mapMarkers.add(
+      Marker(
+        markerId: MarkerId('user_location'),
+        position: _userLocation,
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+        infoWindow: InfoWindow(title: 'Você está aqui'),
+      ),
+    );
+
+    _mapMarkers.add(
+      Marker(
+        markerId: MarkerId('driver_location'),
+        position: _driverLocation,
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+        infoWindow: InfoWindow(title: 'Motorista'),
+      ),
+    );
+
+    // Função para quando o mapa é criado
+    void _onMapCreated(GoogleMapController controller) {
+      _mapController.complete(controller);
+      setState(() {
+        _mapReady = true;
+      });
+
+      // Simula motorista aceitando a corrida após 3 segundos
+      Future.delayed(Duration(seconds: 3), () {
+        if (mounted) {
+          setState(() {
+            _driverAccepted = true;
+          });
+        }
+      });
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -2655,284 +2928,446 @@ class _DeliveryAppState extends State<DeliveryApp>
         backgroundColor: Colors.orange[400],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(20),
-          child: Column(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
+        child: Column(
+          children: [
+            // Mapa com acompanhamento do motorista
+            Expanded(
+              flex: 2,
+              child: Stack(
+                children: [
+                  // Mapa do Google Maps
+                  GoogleMap(
+                    onMapCreated: _onMapCreated,
+                    initialCameraPosition: CameraPosition(
+                      target: _userLocation,
+                      zoom: 15.0,
                     ),
-                  ],
-                ),
-                padding: EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Resumo da corrida',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Icon(
-                          _selectedVehicle == 'moto'
-                              ? Icons.two_wheeler
-                              : Icons.directions_car,
-                          color: Colors.grey[500],
-                        ),
-                        SizedBox(width: 12),
-                        Text(
-                          _selectedVehicle == 'moto'
-                              ? 'Entrega de Moto'
-                              : 'Entrega de Carro',
-                          style: TextStyle(color: Colors.grey[700]),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 16),
-                    Divider(),
-                    SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Valor total',
-                          style: TextStyle(color: Colors.grey[600]),
-                        ),
-                        Text(
-                          'R\$ ${ridePrice.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.orange[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 20),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                padding: EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Forma de pagamento',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(height: 16),
+                    markers: _mapMarkers,
+                    myLocationEnabled: true,
+                    myLocationButtonEnabled: true,
+                    zoomControlsEnabled: true,
+                    mapType: MapType.normal,
+                  ),
 
-                    // Mostra o método selecionado com destaque
+                  if (!_mapReady)
                     Container(
-                      padding: EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.orange[50],
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.orange[400]!,
-                          width: 2,
+                      color: Colors.white,
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(height: 20),
+                            Text('Carregando mapa...'),
+                          ],
                         ),
                       ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            _paymentMethodIcons[_selectedPaymentMethod]!,
-                            color:
-                                _paymentMethodColors[_selectedPaymentMethod]!,
+                    ),
+
+                  // Overlay com informações do motorista
+                  Positioned(
+                    bottom: 20,
+                    left: 20,
+                    right: 20,
+                    child: AnimatedOpacity(
+                      opacity: _driverAccepted ? 1.0 : 0.0,
+                      duration: Duration(milliseconds: 500),
+                      child: _driverAccepted
+                          ? Container(
+                              padding: EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black26,
+                                    blurRadius: 8,
+                                    offset: Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 60,
+                                    height: 60,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.orange[100],
+                                    ),
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.person,
+                                        size: 30,
+                                        color: Colors.orange[600],
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Motorista encontrado!',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.green[700],
+                                          ),
+                                        ),
+                                        SizedBox(height: 4),
+                                        Text(
+                                          'João Silva • ABC-1234',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.grey[700],
+                                          ),
+                                        ),
+                                        SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.star,
+                                              size: 16,
+                                              color: Colors.amber,
+                                            ),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              '4.8',
+                                              style: TextStyle(fontSize: 14),
+                                            ),
+                                            SizedBox(width: 16),
+                                            Icon(
+                                              _selectedVehicle == 'moto'
+                                                  ? Icons.two_wheeler
+                                                  : Icons.directions_car,
+                                              size: 16,
+                                              color: Colors.grey[600],
+                                            ),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              _selectedVehicle == 'moto'
+                                                  ? 'Honda CG 160'
+                                                  : 'Fiat Uno',
+                                              style: TextStyle(fontSize: 14),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.phone,
+                                    color: Colors.green[600],
+                                    size: 28,
+                                  ),
+                                ],
+                              ),
+                            )
+                          : SizedBox.shrink(),
+                    ),
+                  ),
+
+                  // Overlay de "Procurando motorista"
+                  Positioned(
+                    top: 20,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(30),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.orange[400]!,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            Text(
+                              _driverAccepted
+                                  ? 'Motorista a caminho'
+                                  : 'Procurando motorista...',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: _driverAccepted
+                                    ? Colors.green[700]
+                                    : Colors.grey[700],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Resumo do pagamento
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
                           ),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                        ],
+                      ),
+                      padding: EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Resumo da corrida',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Icon(
+                                _selectedVehicle == 'moto'
+                                    ? Icons.two_wheeler
+                                    : Icons.directions_car,
+                                color: Colors.grey[500],
+                              ),
+                              SizedBox(width: 12),
+                              Text(
+                                _selectedVehicle == 'moto'
+                                    ? 'Entrega de Moto'
+                                    : 'Entrega de Carro',
+                                style: TextStyle(color: Colors.grey[700]),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 16),
+                          Divider(),
+                          SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Valor total',
+                                style: TextStyle(color: Colors.grey[600]),
+                              ),
+                              Text(
+                                'R\$ ${ridePrice.toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.orange[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      padding: EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Forma de pagamento',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          SizedBox(height: 16),
+
+                          // Mostra o método selecionado com destaque
+                          Container(
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.orange[50],
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.orange[400]!,
+                                width: 2,
+                              ),
+                            ),
+                            child: Row(
                               children: [
-                                Text(
-                                  _paymentMethodDisplay[_selectedPaymentMethod]!,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
+                                Icon(
+                                  _paymentMethodIcons[_selectedPaymentMethod]!,
+                                  color:
+                                      _paymentMethodColors[_selectedPaymentMethod]!,
+                                ),
+                                SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _paymentMethodDisplay[_selectedPaymentMethod]!,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      Text(
+                                        _paymentMethodBalances[_selectedPaymentMethod]!,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                Text(
-                                  _paymentMethodBalances[_selectedPaymentMethod]!,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
+                                Icon(Icons.check, color: Colors.green[600]),
                               ],
                             ),
                           ),
-                          Icon(Icons.check, color: Colors.green[600]),
-                        ],
-                      ),
-                    ),
 
-                    SizedBox(height: 16),
-                    Text(
-                      'Para alterar o método de pagamento, volte para a tela anterior.',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: () {
-                  if (_paymentMethod.isNotEmpty) {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: Text('Sucesso'),
-                        content: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.check_circle,
-                              color: Colors.green,
-                              size: 60,
+                          SizedBox(height: 16),
+                          Text(
+                            'Para alterar o método de pagamento, volte para a tela anterior.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[500],
                             ),
-                            SizedBox(height: 16),
-                            Text('Pagamento confirmado!'),
-                            SizedBox(height: 8),
-                            Text(
-                              'Método: ${_paymentMethodDisplay[_selectedPaymentMethod]!}',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            SizedBox(height: 8),
-                            Text('Procurando motorista...'),
-                          ],
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                              setState(() {
-                                _showPayment = false;
-                                _paymentMethod = 'cash';
-                                _selectedPaymentMethod = 'cash';
-                                _deliveryAddressSet = false;
-                              });
-                            },
-                            child: Text('OK'),
                           ),
                         ],
                       ),
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange[400],
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  padding: EdgeInsets.symmetric(vertical: 20),
-                  minimumSize: Size(double.infinity, 0),
-                ),
-                child: Text(
-                  'Confirmar pagamento',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPaymentOption({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required String value,
-    required Color color,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _paymentMethod = value;
-        });
-      },
-      child: Container(
-        padding: EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: _paymentMethod == value ? Colors.orange[50] : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: _paymentMethod == value
-                ? Colors.orange[400]!
-                : Colors.grey[200]!,
-            width: 2,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 20,
-              height: 20,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: _paymentMethod == value
-                      ? Colors.orange[400]!
-                      : Colors.grey[300]!,
-                  width: 2,
-                ),
-              ),
-              child: _paymentMethod == value
-                  ? Center(
-                      child: Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.orange[400],
+                    ),
+                    SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: _driverAccepted
+                          ? () {
+                              if (_paymentMethod.isNotEmpty) {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: Text('Corrida confirmada'),
+                                    content: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.check_circle,
+                                          color: Colors.green,
+                                          size: 60,
+                                        ),
+                                        SizedBox(height: 16),
+                                        Text('Seu motorista está a caminho!'),
+                                        SizedBox(height: 8),
+                                        Text(
+                                          'João Silva está vindo buscar sua encomenda',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(fontSize: 12),
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text(
+                                          'Tempo estimado: 5-8 minutos',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.orange[600],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                          setState(() {
+                                            _showPayment = false;
+                                            _paymentMethod = 'cash';
+                                            _selectedPaymentMethod = 'cash';
+                                            _deliveryAddressSet = false;
+                                            // Limpar formulários
+                                            _destinationAddressController
+                                                .clear();
+                                            _destinationDetailsController
+                                                .clear();
+                                            _destinationNameController.clear();
+                                            _destinationPhoneController.clear();
+                                            _senderAddressController.clear();
+                                            _senderDetailsController.clear();
+                                            _senderNameController.clear();
+                                            _senderPhoneController.clear();
+                                          });
+                                        },
+                                        child: Text('OK'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+                            }
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _driverAccepted
+                            ? Colors.orange[400]
+                            : Colors.grey[400],
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        minimumSize: Size(double.infinity, 0),
+                      ),
+                      child: Text(
+                        _driverAccepted
+                            ? 'Acompanhar corrida'
+                            : 'Aguardando motorista...',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    )
-                  : null,
-            ),
-            SizedBox(width: 16),
-            Icon(icon, color: color),
-            SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: TextStyle(fontWeight: FontWeight.w600)),
-                  Text(
-                    subtitle,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                  ),
-                ],
+                    ),
+                    SizedBox(height: 10),
+                  ],
+                ),
               ),
             ),
           ],
@@ -3876,256 +4311,6 @@ class _DeliveryAppState extends State<DeliveryApp>
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildProfileScreen() {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.chevron_left),
-          onPressed: () {
-            setState(() {
-              _showProfile = false;
-            });
-          },
-        ),
-        title: Text('Meu Perfil'),
-        backgroundColor: Colors.orange[400],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              Container(
-                padding: EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 72,
-                      height: 72,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Colors.red[400]!, Colors.pink[400]!],
-                        ),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          'G',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Gabriele',
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Editar minhas informações',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.orange[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              _buildProfileSection(
-                title: 'Atividade',
-                items: [
-                  _buildProfileItem(
-                    title: 'NGPay',
-                    subtitle: 'R\$377',
-                    icon: Icons.account_balance_wallet,
-                    iconColor: Colors.blue[600]!,
-                  ),
-                ],
-              ),
-              _buildProfileSection(
-                title: 'Ajuda',
-                items: [
-                  _buildProfileItem(
-                    title: 'Mensagens',
-                    icon: Icons.message,
-                    iconColor: Colors.blue[600]!,
-                  ),
-                  _buildProfileItem(
-                    title: 'Central de segurança',
-                    icon: Icons.security,
-                    iconColor: Colors.green[600]!,
-                  ),
-                  _buildProfileItem(
-                    title: 'Configurações',
-                    icon: Icons.settings,
-                    iconColor: Colors.grey[600]!,
-                  ),
-                ],
-              ),
-              _buildProfileSection(
-                title: 'Convide',
-                items: [
-                  _buildProfileItem(
-                    title: 'Convide Amigos',
-                    icon: Icons.group_add,
-                    iconColor: Colors.purple[600]!,
-                  ),
-                  _buildProfileItem(
-                    title: 'Convide Motoristas',
-                    icon: Icons.directions_car,
-                    iconColor: Colors.orange[600]!,
-                  ),
-                ],
-              ),
-              _buildProfileSection(
-                title: 'Oportunidades',
-                items: [
-                  _buildProfileItem(
-                    title: 'Seja Motorista',
-                    icon: Icons.work,
-                    iconColor: Colors.orange[600]!,
-                  ),
-                ],
-              ),
-              _buildProfileSection(
-                title: 'Benefícios',
-                items: [
-                  _buildProfileItem(
-                    title: 'Descontos',
-                    icon: Icons.discount,
-                    iconColor: Colors.red[600]!,
-                  ),
-                  _buildProfileItem(
-                    title: 'Escanear',
-                    icon: Icons.qr_code_scanner,
-                    iconColor: Colors.blue[600]!,
-                  ),
-                ],
-              ),
-              Padding(
-                padding: EdgeInsets.all(20),
-                child: ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _currentScreen = 'auth';
-                      _showProfile = false;
-                      _deliveryAddressSet = false;
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red[50],
-                    foregroundColor: Colors.red[600],
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    minimumSize: Size(double.infinity, 0),
-                  ),
-                  child: Text('Sair'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProfileSection({
-    required String title,
-    required List<Widget> items,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          child: Text(
-            title,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[600],
-            ),
-          ),
-        ),
-        Container(
-          color: Colors.white,
-          child: Column(children: items),
-        ),
-        SizedBox(height: 8),
-      ],
-    );
-  }
-
-  Widget _buildProfileItem({
-    required String title,
-    String? subtitle,
-    required IconData icon,
-    required Color iconColor,
-    VoidCallback? onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        color: Colors.white,
-        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Center(child: Icon(icon, size: 20, color: iconColor)),
-            ),
-            SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                  ),
-                  if (subtitle != null) ...[
-                    SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: TextStyle(fontSize: 14, color: Colors.grey[500]),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
-          ],
-        ),
       ),
     );
   }
